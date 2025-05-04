@@ -10,6 +10,7 @@ passport.use(new GoogleStrategy(
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
+      console.log("Google profile:", profile);
       let user = await User.findOne({ googleId: profile.id });
 
       if (!user) {
@@ -19,13 +20,18 @@ passport.use(new GoogleStrategy(
           email: profile.emails[0].value,
         });
         await user.save();
+        console.log("Nuevo usuario creado:", user);
+      } else {
+        console.log("Usuario ya existente:", user);
       }
 
       return done(null, user);
     } catch (err) {
+      console.error("Error en GoogleStrategy:", err);
       return done(err, null);
     }
   }
+
 ));
 
 passport.serializeUser((user, done) => {
