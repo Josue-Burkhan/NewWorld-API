@@ -5,7 +5,7 @@
     "description": "API documentation for managing characters, factions, places, species, items, and more in the Wild Fantasy universe. <a href='/auth/google'>Login</a>",
     "version": "1.0.1"
   },
-  "host": "cse-341-project1-1-wxiy.onrender.com",
+  "host": "newworld-api.onrender.com",
   "basePath": "/",
   "schemes": [
     "https",
