@@ -9,7 +9,7 @@ router.get("/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
   (req, res) => {
     const token = jwt.sign({ userId: req.user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
-    res.redirect(`https://cse-341-project1-1-wxiy.onrender.com/api-newworld-docs/?token=${token}`);
+    res.redirect(`https://newworld-api.onrender.com/api-newworld-docs/?token=${token}`);
 
   }
 );

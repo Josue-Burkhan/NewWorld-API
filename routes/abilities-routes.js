@@ -8,6 +8,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 // GET all abilities for the authenticated user
 router.get("/", authMiddleware, async (req, res) => {
+
   /*
     #swagger.tags = ['Abilities']
     #swagger.description = 'Retrieve all abilities associated with the authenticated user.'
@@ -33,6 +34,7 @@ router.get("/", authMiddleware, async (req, res) => {
       schema: { message: 'Error retrieving abilities', error: {} } 
     }
   */
+
   try {
     const abilities = await Ability.find({ owner: req.user.userId })
       .populate({
