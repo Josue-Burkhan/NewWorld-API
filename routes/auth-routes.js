@@ -9,8 +9,7 @@ router.get("/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
   (req, res) => {
     const token = jwt.sign({ userId: req.user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
-    res.redirect(`https://writers.wild-fantasy.com/auth-success/?token=${token}`);
-
+    res.redirect(`https://writers.wild-fantasy.com/dashboard/?token=${token}`);
   }
 );
 
