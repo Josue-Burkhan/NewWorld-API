@@ -13,7 +13,15 @@ router.get("/google", (req, res, next) => {
 router.get("/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
   (req, res) => {
-    const token = jwt.sign({ userId: req.user._id }, process.env.JWT_SECRET, { expiresIn: "3h" });
+    const token = jwt.sign(
+      {
+        userId: req.user._id,
+        email: req.user.email,
+        plan: req.user.plan
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "3h" }
+    );    
 
     const redirectPath = req.session.redirectTo || "/new-world/dashboard/";
 

@@ -8,6 +8,7 @@ const morgan = require("morgan");
 const session = require("express-session");
 const passport = require("passport");
 require("./auth/passport");
+const userRoutes = require("./routes/user-routes.js");
 
 const abilityRoutes = require("./routes/abilities-routes.js");
 const characterRoutes = require("./routes/characters-routes.js");
@@ -72,6 +73,15 @@ const swaggerOptions = {
   },
 };
 
+// Connect to MongoDB
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("MongoDB connection error:", err));
+
+
+//Routes
+
 app.use(
   "/api-newworld-docs",
   swaggerUi.serve,
@@ -83,15 +93,7 @@ app.use(
   }
 );
 
-
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("MongoDB connection error:", err));
-
-
-//Routes
+app.use("/api", userRoutes);
 app.use("/api/newworld/abilities", abilityRoutes);
 app.use("/api/newworld/characters", characterRoutes);
 //app.use("/api/newworld/events", eventRoutes);
