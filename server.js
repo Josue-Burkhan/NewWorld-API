@@ -9,6 +9,7 @@ const session = require("express-session");
 const passport = require("passport");
 require("./auth/passport");
 const userRoutes = require("./routes/user-routes.js");
+const worldRoutes = require("./routes/worlds");
 
 const abilityRoutes = require("./routes/abilities-routes.js");
 const characterRoutes = require("./routes/characters-routes.js");
@@ -35,6 +36,7 @@ app.use(cors({
 }));
 
 app.use(morgan("dev"));
+app.use("/uploads", express.static("uploads"));
 
 app.use((req, res, next) => {
   if (req.query.token) {
@@ -100,6 +102,8 @@ app.use(
 app.use("/api/account", userRoutes);
 app.use("/api/newworld/abilities", abilityRoutes);
 app.use("/api/newworld/characters", characterRoutes);
+app.use("/api/worlds", worldRoutes);
+
 //app.use("/api/newworld/events", eventRoutes);
 //app.use("/api/newworld/factions", factionRoutes);
 //app.use("/api/newworld/items", itemRoutes);
