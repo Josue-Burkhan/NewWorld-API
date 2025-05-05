@@ -93,7 +93,7 @@ app.use(
   }
 );
 
-app.use("/api", userRoutes);
+app.use("/api/account", userRoutes);
 app.use("/api/newworld/abilities", abilityRoutes);
 app.use("/api/newworld/characters", characterRoutes);
 //app.use("/api/newworld/events", eventRoutes);
