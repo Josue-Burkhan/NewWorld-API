@@ -27,6 +27,7 @@ const HOST = process.env.HOST || "localhost";
 
 // Middleware
 app.use(express.json());
+
 app.use(cors());
 app.use(morgan("dev"));
 
@@ -39,10 +40,15 @@ app.use((req, res, next) => {
 
 
 app.use(session({
-  secret: process.env.JWT_SECRET,
+  secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 1000 * 60 * 60 * 3
+  }
 }));
+
 
 app.use(passport.initialize());
 app.use(passport.session());

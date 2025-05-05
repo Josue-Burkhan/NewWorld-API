@@ -2100,6 +2100,11 @@
             "name": "token",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "redirect",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
