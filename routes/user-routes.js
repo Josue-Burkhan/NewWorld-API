@@ -21,7 +21,7 @@ const authenticateToken = (req, res, next) => {
 };
 
 router.get("/me", authenticateToken, async (req, res) => {
-  const user = await User.findById(req.user.userId).select("email plan firstname");
+  const user = await User.findById(req.user.userId).select("email plan name");
 
   if (!user) return res.status(404).json({ error: "User not found" });
 
