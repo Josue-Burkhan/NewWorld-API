@@ -3,6 +3,10 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user-model");
 const router = express.Router();
 
+const world = require("../models/World");
+
+
+
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
   const token = authHeader?.split(" ")[1];
@@ -22,7 +26,7 @@ router.get("/me", authenticateToken, async (req, res) => {
   if (!user) return res.status(404).json({ error: "User not found" });
 
   // ⚠️ Asegúrate que has importado el modelo World si usas esto
-  const worlds = await World.find({ owner: user._id });
+  const worlds = await world.find({ owner: user._id });
 
   res.json({
     accountData: {
