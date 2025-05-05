@@ -16,16 +16,24 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-router.get("/me", authenticateToken, async (req, res) => {
-  const user = await User.findById(req.user.userId).select("email plan");
+router.get("/account/me", authenticateToken, async (req, res) => {
+  const user = await User.findById(req.user.userId).select("email plan firstname");
 
   if (!user) return res.status(404).json({ error: "User not found" });
 
+  // ⚠️ Asegúrate que has importado el modelo World si usas esto
+  const worlds = await World.find({ owner: user._id });
+
   res.json({
-    userId: user._id,
-    email: user.email,
-    plan: user.plan
+    accountData: {
+      userId: user._id,
+      email: user.email,
+      account_firstname: user.firstname,
+      account_plan: user.plan,
+    },
+    worlds
   });
 });
+
 
 module.exports = router;
