@@ -29,7 +29,11 @@ const HOST = process.env.HOST || "localhost";
 // Middleware
 app.use(express.json());
 
-app.use(cors());
+app.use(cors({
+  origin: "https://writers.wild-fantasy.com",
+  credentials: true
+}));
+
 app.use(morgan("dev"));
 
 app.use((req, res, next) => {
