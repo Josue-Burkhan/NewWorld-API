@@ -32,7 +32,7 @@ router.get("/me", authenticateToken, async (req, res) => {
     accountData: {
       userId: user._id,
       email: user.email,
-      account_firstname: user.firstname,
+      account_firstname: user.name,
       account_plan: user.plan,
     },
     worlds
