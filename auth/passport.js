@@ -18,7 +18,7 @@ passport.use(new GoogleStrategy(
           googleId: profile.id,
           name: profile.displayName,
           email: profile.emails[0].value,
-          plan: "free"
+          plan: "Free"
         });
         await user.save();
         console.log("Nuevo usuario creado:", user);

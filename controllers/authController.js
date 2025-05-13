@@ -3,6 +3,6 @@ exports.getMe = (req, res) => {
     res.json({
       userId: user.id,
       email: user.email,
-      plan: user.plan || 'free'
+      plan: user.plan || 'Free'
     });
   };
