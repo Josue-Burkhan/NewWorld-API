@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema({
     googleId: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    plan: { type: String, enum: ['free', 'premium', 'creator of worlds'], default: 'free' },
+    plan: { type: String, enum: ['Free', 'Premium', 'Creator of Worlds'], default: 'Free' },
     createdAt: { type: Date, default: Date.now }
 });
 
