@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-2">
+    <link rel="stylesheet" href="/try/try.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="brand" style="text-align: center;">Wild Fantasy Writers</div>
+            <div class="menu-item">Dashboard</div>
+            <!--
+            <div class="menu-item">Personajes</div>
+            <div class="menu-item">Habilidades</div>
+            <div class="menu-item">Objetos</div>
+            <div class="menu-item">Configuración</div> -->
+
+            <!-- Perfil de usuario -->
+            <div class="user-profile">
+                <div class="user-avatar">U</div>
+                <div>
+                    <div class="character-name">Usuario</div>
+                    <div class="character-desc">Administrador</div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Contenido Principal -->
+        <main class="main-content">
+            <!-- Header con buscador -->
+            <div class="worlds-header">
+                <h2>Tus Mundos</h2>
+                <div class="header-actions">
+                    <button class="create-world-btn" onclick="showCreateModal()">
+                        ✚ Crear nuevo mundo
+                    </button>
+                </div>
+            </div>
+            <!--Estadisticas-->
+            <div class="quick-stats">
+                <div class="stat-card">
+                    <div class="stat-label">Personajes</div>
+                    <div class="stat-value">24</div>
+                    <div class="stat-trend">↗ 12%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Mundos Activos</div>
+                    <div class="stat-value">5</div>
+                    <div class="stat-trend">→ Estable</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Objetos</div>
+                    <div class="stat-value">143</div>
+                    <div class="stat-trend">↘ 3%</div>
+                </div>
+            </div>
+
+
+            <!-- Lista de Mundos -->
+
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Buscar personajes, mundos, objetos..."
+                    id="searchInput" autocomplete="off">
+                <div class="search-results" id="searchResults"></div>
+            </div>
+            <div class="worlds-list">
+                <!-- Mundo 1 -->
+                <div class="world-card">
+                    <div class="world-info">
+                        <h3>FMG</h3>
+                        <p>La novela actual que escribo</p>
+                        <div class="world-meta">
+                            <span>Modificado: Julio 12, 2024</span>
+                        </div>
+                    </div>
+                    <div class="world-actions">
+                        <button class="edit-btn">Editar</button>
+                    </div>
+                </div>
+
+                <!-- Mundo 2 -->
+                <div class="world-card">
+                    <div class="world-info">
+                        <h3>WAI</h3>
+                        <p>Novela de fantasía épica</p>
+                        <div class="world-meta">
+                            <span>Modificado: Julio 12, 2025</span>
+                        </div>
+                    </div>
+                    <div class="world-actions">
+                        <button class="edit-btn">Editar</button>
+                    </div>
+                </div>
+
+                <!-- Mundo 3 -->
+                <div class="world-card">
+                    <div class="world-info">
+                        <h3>NEW</h3>
+                        <p>Proyecto de ciencia ficción</p>
+                        <div class="world-meta">
+                            <span>Modificado: Julio 1, 2024</span>
+                        </div>
+                    </div>
+                    <div class="world-actions">
+                        <button class="edit-btn">Editar</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modal Creación -->
+        <div id="createModal" class="modal">
+            <div class="modal-content">
+                <h3>Crear nuevo mundo</h3>
+                <form id="worldForm" onsubmit="handleSubmit(event)">
+                    <div class="form-group">
+                        <label>Nombre del mundo:</label>
+                        <input type="text" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción:</label>
+                        <textarea rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="create-world-btn">Crear Mundo</button>
+                        <button type="button" class="edit-btn" onclick="hideCreateModal()">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Botón Tema -->
+        <button class="theme-toggle" onclick="toggleTheme()">🌓 Cambiar tema</button>
+    </div>
+
+    <script>
+        // Variables Globales
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const searchContainer = document.querySelector('.search-container');
+        const characters = [
+            { name: 'Aelar', desc: 'Elfo • Archimago' },
+            { name: 'Kaelin', desc: 'Humano - Caballero' },
+            { name: 'Thalia', desc: 'Medio elfa • Druida' },
+            { name: 'Lucius', desc: 'Humano - Sacerdote' }
+        ];
+
+        // Funciones de Búsqueda
+        function initSearch() {
+            searchInput.addEventListener('input', function (e) {
+                const query = e.target.value.toLowerCase();
+                if (query.length < 2) {
+                    searchResults.style.display = 'none';
+                    return;
+                }
+
+                const worldCards = document.querySelectorAll('.world-card');
+                const results = [];
+
+                worldCards.forEach(card => {
+                    const titleEl = card.querySelector('h3');
+                    const descEl = card.querySelector('p');
+
+                    const title = titleEl?.textContent.trim() || '';
+                    const desc = descEl?.textContent.trim() || '';
+
+                    if (title.toLowerCase().includes(query) || desc.toLowerCase().includes(query)) {
+                        results.push({
+                            element: card,
+                            titulo: title,
+                            descripcion: desc
+                        });
+                    }
+                });
+
+                displayResults(results);
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!searchContainer.contains(e.target)) {
+                    searchResults.style.display = 'none';
+                }
+            });
+        }
+
+
+
+        function displayResults(results) {
+            searchResults.innerHTML = '';
+            if (results.length === 0) {
+                searchResults.innerHTML = '<div class="search-result-item">No se encontraron resultados</div>';
+            } else {
+                results.forEach(result => {
+                    const item = document.createElement('div');
+                    item.className = 'search-result-item';
+
+                    item.innerHTML = `
+                <div class="result-title">${result.titulo}</div>
+                ${result.descripcion ? `<div class="result-description">${result.descripcion}</div>` : ''}
+            `;
+
+                    item.addEventListener('click', () => {
+                        const elements = document.querySelectorAll('.main-content *');
+                        elements.forEach(el => {
+                            if (el.textContent.trim() === result.titulo || el.textContent.trim() === result.descripcion) {
+                                el.scrollIntoView({ behavior: 'smooth' });
+                            }
+                        });
+                        searchResults.style.display = 'none';
+                    });
+
+                    searchResults.appendChild(item);
+                });
+            }
+            searchResults.style.display = 'block';
+        }
+
+
+        // Funciones de Personajes
+        function renderCharacters() {
+            const colors = getComputedStyle(document.documentElement)
+                .getPropertyValue('--avatar-colors')
+                .replace(/ /g, '')
+                .split(',');
+
+            const grid = document.querySelector('.character-grid');
+            grid.innerHTML = characters.map((character, index) => {
+                const colorIndex = index % colors.length;
+                return `
+                    <div class="character-card">
+                        <div class="character-avatar" 
+                            style="--avatar-color: ${colors[colorIndex]}">
+                            ${character.name[0]}
+                        </div>
+                        <div class="character-info">
+                            <div class="character-name">${character.name}</div>
+                            <div class="character-desc">${character.desc}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Funciones de Tema
+        function toggleTheme() {
+            document.body.setAttribute('data-theme',
+                document.body.getAttribute('data-theme') === 'light' ? '' : 'light'
+            );
+        }
+
+        // Funciones de Modal
+        function showCreateModal() {
+            document.getElementById('createModal').style.display = 'flex';
+        }
+
+        function hideCreateModal() {
+            document.getElementById('createModal').style.display = 'none';
+        }
+
+        function handleSubmit(event) {
+            event.preventDefault();
+            alert('Mundo creado exitosamente!');
+            hideCreateModal();
+        }
+
+        // Event Listeners
+        window.onclick = function (event) {
+            const modal = document.getElementById('createModal');
+            if (event.target == modal) {
+                hideCreateModal();
+            }
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            initSearch();
+            renderCharacters();
+        });
+    </script>
+</body>
+
+</html>

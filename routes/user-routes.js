@@ -1,11 +1,10 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user-model");
+const World = require("../models/World");
+const { upgradeUserPlan, renewUserPlan } = require("../services/userServices");
+
 const router = express.Router();
-
-const world = require("../models/World");
-
-
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -25,8 +24,7 @@ router.get("/me", authenticateToken, async (req, res) => {
 
   if (!user) return res.status(404).json({ error: "User not found" });
 
-  // ⚠️ Asegúrate que has importado el modelo World si usas esto
-  const worlds = await world.find({ owner: user._id });
+  const worlds = await World.find({ owner: user._id });
 
   res.json({
     accountData: {
@@ -39,5 +37,25 @@ router.get("/me", authenticateToken, async (req, res) => {
   });
 });
 
+// PUT /api/user/upgrade → Upgradear plan del usuario
+router.put("/upgrade", authenticateToken, async (req, res) => {
+  const { newPlan } = req.body;
+  try {
+    const updatedUser = await upgradeUserPlan(req.user.userId, newPlan);
+    res.json({ message: "Updated plan", plan: updatedUser.plan });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// PUT /api/user/renew → Renovar plan del usuario
+router.put("/renew", authenticateToken, async (req, res) => {
+  try {
+    const updatedUser = await renewUserPlan(req.user.userId);
+    res.json({ message: "Renewed plan", expiresAt: updatedUser.planExpiresAt });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
 
 module.exports = router;

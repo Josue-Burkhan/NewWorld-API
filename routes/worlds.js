@@ -3,8 +3,11 @@ const multer = require("multer");
 const path = require("path");
 const router = express.Router();
 const World = require("../models/World");
+const User = require("../models/user-model");
+const {
+  canCreateWorld
+} = require("../services/userServices");
 
-// Autenticación (puedes mover esta función a un archivo aparte si se usa en más lugares)
 const jwt = require("jsonwebtoken");
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -19,13 +22,12 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Configura multer para guardar imágenes en /uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // ej: 1659876543210.png
+    cb(null, Date.now() + path.extname(file.originalname));
   }
 });
 
@@ -35,16 +37,32 @@ const upload = multer({ storage });
 router.post("/", authenticateToken, upload.single("image"), async (req, res) => {
   try {
     const { name, description } = req.body;
+    const user = await User.findById(req.user.userId);
+    const currentWorldCount = await World.countDocuments({ owner: user._id });
+
+    if (!canCreateWorld(user, currentWorldCount)) {
+      return res.status(403).json({ error: "You cannot create more worlds with your current plan." });
+    }
 
     const newWorld = new World({
       name,
       description,
-      owner: req.user.userId,
+      owner: user._id,
       image: req.file ? `/uploads/${req.file.filename}` : undefined
     });
 
     await newWorld.save();
     res.status(201).json(newWorld);
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// GET /api/worlds → Obtener todos los mundos del usuario
+router.get("/", authenticateToken, async (req, res) => {
+  try {
+    const worlds = await World.find({ owner: req.user.userId });
+    res.json(worlds);
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }

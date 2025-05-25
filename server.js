@@ -13,12 +13,18 @@ const worldRoutes = require("./routes/worlds");
 
 const abilityRoutes = require("./routes/abilities-routes.js");
 const characterRoutes = require("./routes/characters-routes.js");
-//const eventRoutes = require("./routes/events-routes.js");
-//const factionRoutes = require("./routes/factions-routes.js");
-//const itemRoutes = require("./routes/items-routes.js");
-//const magicalObjectRoutes = require("./routes/magicalObjects-routes.js");
-//const placeRoutes = require("./routes/places-routes.js");
-//const speciesRoutes = require("./routes/species-routes.js");
+const itemRoutes = require("./routes/items-routes.js");
+const locationRoutes = require("./routes/locations-routes.js");
+const eventRoutes = require("./routes/events-routes.js");
+const factionRoutes = require("./routes/factions-routes.js");
+const technologyRoutes = require("./routes/technologies-routes.js");
+const languageRoutes = require("./routes/languages-routes.js");
+const powerSystemRoutes = require("./routes/powersystems-routes.js");
+const creatureRoutes = require("./routes/creatures-routes.js");
+const religionRoutes = require("./routes/religions-routes.js");
+const storyRoutes = require("./routes/stories-routes.js");
+const raceRoutes = require("./routes/races-routes.js");
+const economyRoutes = require("./routes/economies-routes.js");
 
 const authRoutes = require("./routes/auth-routes");
 
@@ -100,16 +106,21 @@ app.use(
 );
 
 app.use("/api/account", userRoutes);
+app.use("/api/worlds", worldRoutes);
 app.use("/api/newworld/abilities", abilityRoutes);
 app.use("/api/newworld/characters", characterRoutes);
-app.use("/api/worlds", worldRoutes);
-
-//app.use("/api/newworld/events", eventRoutes);
-//app.use("/api/newworld/factions", factionRoutes);
-//app.use("/api/newworld/items", itemRoutes);
-//app.use("/api/newworld/magical-objects", magicalObjectRoutes);
-//app.use("/api/newworld/places", placeRoutes);
-//app.use("/api/newworld/species", speciesRoutes);
+app.use("/api/newworld/items", itemRoutes);
+app.use("/api/newworld/locations", locationRoutes);
+app.use("/api/newworld/events", eventRoutes);
+app.use("/api/newworld/factions", factionRoutes);
+app.use("/api/newworld/technologies", technologyRoutes);
+app.use("/api/newworld/languages", languageRoutes);
+app.use("/api/newworld/powersystems", powerSystemRoutes);
+app.use("/api/newworld/creatures", creatureRoutes);
+app.use("/api/newworld/religions", religionRoutes);
+app.use("/api/newworld/stories", storyRoutes);
+app.use("/api/newworld/races", raceRoutes);
+app.use("/api/newworld/economies", economyRoutes);
 
 app.use("/auth", authRoutes);
 

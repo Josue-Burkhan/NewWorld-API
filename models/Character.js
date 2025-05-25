@@ -2,44 +2,88 @@ const mongoose = require("mongoose");
 
 const characterSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  age: { type: Number, required: true },
-  gender: { type: String, required: true },
-  race: { type: String, required: true },
-  nickname: { type: String },
+
+  // Datos generales
+  age: Number,
+  gender: String,
+  nickname: String,
+
+  // Relación con el mundo
+  world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
+  owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+
+  // Raza (opcional)
+  race: { type: mongoose.Schema.Types.ObjectId, ref: "Race" },
+  rawRace: String,
+
+  // Apariencia física
   appearance: {
-    height: { type: Number, required: true },
-    weight: { type: Number, required: true },
-    eyeColor: { type: String },
-    hairColor: { type: String },
-    clothingStyle: { type: String }
+    height: Number,
+    weight: Number,
+    eyeColor: String,
+    hairColor: String,
+    clothingStyle: String,
   },
+
+  // Personalidad
   personality: {
     traits: [String],
     strengths: [String],
     weaknesses: [String],
-    quirks: [String]
+    quirks: [String],
   },
+
+  // Historia
   history: {
-    birthplace: { type: String },
+    birthplace: String,
     events: [
       {
-        year: { type: Number, required: true },
+        year: Number,
         description: String,
         _id: false
-      }]
+      }
+    ]
   },
-  relationships: {
-    family: [String],
-    friends: [String],
-    enemies: [String],
-    allies: [String],
-    romance: [String]
-  },
-  abilities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
-  coreRank: { type: String },
 
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-},
-  { collection: "newworld.character" });
+  //Si quiere poner algo más: 
+  customNotes: { type: String, maxlength: 250 },
+
+  // Relaciones con otros personajes
+  relationships: {
+    family: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    enemies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    romance: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+  },
+
+  // Vinculaciones con otras entidades del mundo
+  abilities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
+  rawAbilities: String,
+
+  weapons: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
+  rawWeapons: String,
+
+  faction: { type: mongoose.Schema.Types.ObjectId, ref: "Faction" },
+  rawFactions: String,
+
+  location: { type: mongoose.Schema.Types.ObjectId, ref: "Location" },
+  rawLocation: String,
+
+  powerSystem: { type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" },
+  rawPowerSystem: String,
+
+  religion: { type: mongoose.Schema.Types.ObjectId, ref: "Religion" },
+  rawReligion: String,
+
+  creature: { type: mongoose.Schema.Types.ObjectId, ref: "Creature" },
+  rawCreature: String,
+
+  economy: { type: mongoose.Schema.Types.ObjectId, ref: "Economy" },
+  rawEconomy: String,
+
+  story: { type: mongoose.Schema.Types.ObjectId, ref: "Story" },
+  rawStory: String
+
+}, { collection: "newworld.character", timestamps: true });
 
 module.exports = mongoose.model("Character", characterSchema);

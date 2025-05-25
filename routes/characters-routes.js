@@ -2,73 +2,47 @@ const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
-const Ability = require("../models/Ability");
 const Character = require("../models/Character");
+const User = require("../models/user-model");
 const authMiddleware = require("../middleware/authMiddleware");
+
+// Utility function to check user character limits
+async function canCreateCharacter(userId) {
+  const user = await User.findById(userId);
+  if (!user) throw new Error("User not found");
+
+  const characterCount = await Character.countDocuments({ owner: userId });
+
+  switch (user.accountType) {
+    case "Free":
+      return characterCount < 80;
+    case "Premium":
+      return characterCount < 505;
+    case "Creator of Worlds":
+      return true;
+    default:
+      return false;
+  }
+}
 
 // GET all characters for the authenticated user
 router.get("/", authMiddleware, async (req, res) => {
-  /*
-    #swagger.tags = ['Characters']
-    #swagger.description = 'Retrieve all characters associated with the authenticated user.'
-    #swagger.security = [{ "BearerAuth": [] }]
-    #swagger.responses[200] = { 
-      description: 'Successfully retrieved characters', 
-      schema: [{ 
-        _id: 'string', 
-        name: 'string', 
-        age: 'number', 
-        gender: 'string', 
-        race: 'string', 
-        nickname: 'string', 
-        appearance: { 
-          height: 'number', 
-          weight: 'number', 
-          eyeColor: 'string', 
-          hairColor: 'string', 
-          clothingStyle: 'string' 
-        }, 
-        personality: { 
-          traits: ['string'], 
-          strengths: ['string'], 
-          weaknesses: ['string'], 
-          quirks: ['string'] 
-        }, 
-        history: { 
-          birthplace: 'string', 
-          events: [{ year: 'number', description: 'string' }] 
-        }, 
-        relationships: { 
-          family: ['string'], 
-          friends: ['string'], 
-          enemies: ['string'], 
-          allies: ['string'], 
-          romance: ['string'] 
-        }, 
-        abilities: [{ 
-          _id: 'string', 
-          name: 'string', 
-          elements: [{ element: 'string', orbs: 0 }] 
-        }], 
-        coreRank: 'string' 
-      }] 
-    }
-    #swagger.responses[401] = { 
-      description: 'Unauthorized - No token provided or invalid', 
-      schema: { message: 'No token provided or invalid' } 
-    }
-    #swagger.responses[500] = { 
-      description: 'Server error', 
-      schema: { message: 'Error retrieving characters', error: {} } 
-    }
-  */
   try {
     const characters = await Character.find({ owner: req.user.userId })
-      .populate({
-        path: "abilities",
-        select: "name elements",
-        options: { strictPopulate: false }
-      });
+      .populate({ path: "abilities",        select: "_id name" })
+      .populate({ path: "weapons",          select: "_id name" })
+      .populate({ path: "faction",          select: "_id name" })
+      .populate({ path: "location",         select: "_id name" })
+      .populate({ path: "powerSystem",      select: "_id name" })
+      .populate({ path: "religion",         select: "_id name" })
+      .populate({ path: "creature",         select: "_id name" })
+      .populate({ path: "economy",          select: "_id name" })
+      .populate({ path: "story",            select: "_id title" })
+      .populate({ path: "race",             select: "_id name" })
+      .populate({ path: "relationships.family",  select: "_id name" })
+      .populate({ path: "relationships.friends", select: "_id name" })
+      .populate({ path: "relationships.enemies", select: "_id name" })
+      .populate({ path: "relationships.romance", select: "_id name" });
 
     res.json(characters);
   } catch (error) {
@@ -80,81 +54,28 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
-
-// GET  ID
+// GET a single character by ID
 router.get("/:id", authMiddleware, async (req, res) => {
-  /*  
-    #swagger.tags = ['Characters']  
-    #swagger.description = 'Retrieve a character by ID, with authentication and validation.'  
-    #swagger.security = [{ "BearerAuth": [] }]  
-    #swagger.parameters['id'] = { 
-      in: 'path', 
-      description: 'Character ID (must be a valid MongoDB ObjectId)', 
-      required: true, 
-      type: 'string' 
-    }  
-    #swagger.responses[200] = { 
-      description: 'Character data retrieved successfully', 
-      schema: { 
-        _id: 'string', 
-        name: 'string', 
-        age: 'number', 
-        gender: 'string', 
-        race: 'string', 
-        nickname: 'string', 
-        appearance: { 
-          height: 'number', 
-          weight: 'number', 
-          eyeColor: 'string', 
-          hairColor: 'string', 
-          clothingStyle: 'string' 
-        }, 
-        personality: { 
-          traits: ['string'], 
-          strengths: ['string'], 
-          weaknesses: ['string'], 
-          quirks: ['string'] 
-        }, 
-        history: { 
-          birthplace: 'string', 
-          events: [{ year: 'number', description: 'string' }] 
-        }, 
-        relationships: { 
-          family: ['string'], 
-          friends: ['string'], 
-          enemies: ['string'], 
-          allies: ['string'], 
-          romance: ['string'] 
-        }, 
-        abilities: [{ 
-          name: 'string', 
-          elements: [{ element: 'string', orbs: 'number' }] 
-        }], 
-        coreRank: 'string' 
-      } 
-    }  
-    #swagger.responses[400] = { 
-      description: 'Invalid character ID', 
-      schema: { message: 'Invalid character ID' } 
-    }  
-    #swagger.responses[404] = { 
-      description: 'Character not found', 
-      schema: { message: 'Character not found' } 
-    }  
-    #swagger.responses[500] = { 
-      description: 'Server error', 
-      schema: { message: 'Server error', error: {} } 
-    }  
-  */
   try {
-    console.log("Requested ID:", req.params.id);
-
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ message: "Invalid character ID" });
     }
 
     const character = await Character.findOne({ _id: req.params.id })
-      .populate("abilities");
+      .populate({ path: "abilities",        select: "_id name" })
+      .populate({ path: "weapons",          select: "_id name" })
+      .populate({ path: "faction",          select: "_id name" })
+      .populate({ path: "location",         select: "_id name" })
+      .populate({ path: "powerSystem",      select: "_id name" })
+      .populate({ path: "religion",         select: "_id name" })
+      .populate({ path: "creature",         select: "_id name" })
+      .populate({ path: "economy",          select: "_id name" })
+      .populate({ path: "story",            select: "_id title" })
+      .populate({ path: "race",             select: "_id name" })
+      .populate({ path: "relationships.family",  select: "_id name" })
+      .populate({ path: "relationships.friends", select: "_id name" })
+      .populate({ path: "relationships.enemies", select: "_id name" })
+      .populate({ path: "relationships.romance", select: "_id name" });
 
     if (!character) {
       return res.status(404).json({ message: "Character not found" });
@@ -167,109 +88,14 @@ router.get("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-
 // POST
-router.post("/", async (req, res) => {
-  /*  
-    #swagger.tags = ['Characters']  
-    #swagger.description = 'Create a new character associated with the authenticated user.'  
-    #swagger.security = [{ "BearerAuth": [] }]  
-    #swagger.parameters['body'] = {  
-      in: 'body',  
-      description: 'Character data',  
-      required: true,  
-      schema: {  
-        name: 'string',  
-        age: 0,  
-        gender: 'string',  
-        race: 'string',  
-        nickname: 'string',  
-        appearance: {  
-          height: 0,  
-          weight: 0,  
-          eyeColor: 'string',  
-          hairColor: 'string',  
-          clothingStyle: 'string'  
-        },  
-        personality: {  
-          traits: ['string'],  
-          strengths: ['string'],  
-          weaknesses: ['string'],  
-          quirks: ['string']  
-        },  
-        history: {  
-          birthplace: 'string',  
-          events: [{ year: 0, description: 'string' }]  
-        },  
-        relationships: {  
-          family: ['string'],  
-          friends: ['string'],  
-          enemies: ['string'],  
-          allies: ['string'],  
-          romance: ['string']  
-        },  
-        abilities: ['string'],  
-        coreRank: 'string' 
-      }  
-    }  
-    #swagger.responses[201] = {  
-      description: 'Character created successfully',  
-      schema: {  
-        _id: 'string',  
-        name: 'string',  
-        age: 0,  
-        gender: 'string',  
-        race: 'string',  
-        nickname: 'string',  
-        appearance: {  
-          height: 0,  
-          weight: 0,  
-          eyeColor: 'string',  
-          hairColor: 'string',  
-          clothingStyle: 'string'  
-        },  
-        personality: {  
-          traits: ['string'],  
-          strengths: ['string'],  
-          weaknesses: ['string'],  
-          quirks: ['string']  
-        },  
-        history: {  
-          birthplace: 'string',  
-          events: [{ year: 0, description: 'string' }]  
-        },  
-        relationships: {  
-          family: ['string'],  
-          friends: ['string'],  
-          enemies: ['string'],  
-          allies: ['string'],  
-          romance: ['string']  
-        },  
-        abilities: ['string'],  
-        coreRank: 'string',  
-        owner: 'string'  
-      }  
-    }  
-    #swagger.responses[400] = {  
-      description: 'Error creating character',  
-      schema: { message: 'Error creating character', error: {} }  
-    }  
-    #swagger.responses[401] = {  
-      description: 'Unauthorized - No token provided or invalid',  
-      schema: { message: 'No token provided or invalid' }  
-    }  
-  */
+router.post("/", authMiddleware, async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) {
-      return res.status(401).json({ message: "No token provided" });
-    }
+    const userId = req.user.userId;
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
-
-    if (req.body.abilities && !Array.isArray(req.body.abilities)) {
-      return res.status(400).json({ message: "Abilities must be an array of IDs" });
+    const allowed = await canCreateCharacter(userId);
+    if (!allowed) {
+      return res.status(403).json({ message: "Character creation limit reached for your account type" });
     }
 
     const formattedCharacter = {
@@ -307,73 +133,8 @@ router.post("/", async (req, res) => {
   }
 });
 
-
-
-
 // PUT - Update a character by ID
 router.put("/:id", authMiddleware, async (req, res) => {
-  /**
-    #swagger.tags = ['Characters']
-    #swagger.description = 'Updates a character\'s details. Only the owner can update it.'
-    #swagger.security = [{ "BearerAuth": [] }]
-    #swagger.parameters['id'] = {
-        in: 'path',
-        description: 'Character ID',
-        required: true,
-        type: 'string'
-    }
-    #swagger.parameters['body'] = {
-        in: 'body',
-        description: 'Character details to update',
-        required: true,
-        schema: {
-            name: 'string',
-            age: 0,
-            gender: 'string',
-            race: 'string',
-            nickname: 'string',
-            appearance: {
-                height: 0,
-                weight: 0,
-                eyeColor: 'string',
-                hairColor: 'string',
-                clothingStyle: 'string'
-            },
-            personality: {
-                traits: ['string'],
-                strengths: ['string'],
-                weaknesses: ['string'],
-                quirks: ['string']
-            },
-            history: {
-                birthplace: 'string',
-                events: [{ year: 0, description: 'string' }]
-            },
-            relationships: {
-                family: ['string'],
-                friends: ['string'],
-                enemies: ['string'],
-                allies: ['string'],
-                romance: ['string']
-            },
-            abilities: ['string'],
-            coreRank: 'string'
-        }
-    }
-    #swagger.responses[200] = {
-        description: 'Character updated successfully',
-        schema: { $ref: "#/definitions/Character" }
-    }
-    #swagger.responses[400] = {
-        description: 'Invalid character ID or bad request'
-    }
-    #swagger.responses[403] = {
-        description: 'Forbidden - User does not have permission'
-    }
-    #swagger.responses[404] = {
-        description: 'Character not found'
-    }
-  */
   try {
     const { id } = req.params;
 
@@ -398,43 +159,12 @@ router.put("/:id", authMiddleware, async (req, res) => {
 
     res.json(updatedCharacter);
   } catch (error) {
-    res.status(400).json({ message: "Error updating character", error: error.message});
+    res.status(400).json({ message: "Error updating character", error: error.message });
   }
 });
 
-module.exports = router;
-
-
-
-// DELETE 
+// DELETE
 router.delete("/:id", authMiddleware, async (req, res) => {
-  /**  DELETE - Remove a character by ID
-   #swagger.tags = ['Characters']
-   #swagger.description = 'Deletes a character by its ID. Only the owner of the character can delete it.'
-   #swagger.security = [{ "BearerAuth": [] }]
-   #swagger.parameters['id'] = {
-       in: 'path',
-       description: 'Character ID',
-       required: true,
-       type: 'string'
-   }
-   #swagger.responses[200] = {
-       description: 'Character deleted successfully',
-       schema: { message: "Character deleted successfully" }
-   }
-   #swagger.responses[400] = {
-       description: 'Invalid character ID'
-   }
-   #swagger.responses[403] = {
-       description: 'Forbidden - User does not have permission'
-   }
-   #swagger.responses[404] = {
-       description: 'Character not found'
-   }
-   #swagger.responses[500] = {
-       description: 'Error deleting character'
-   }
-  */
   try {
     const { id } = req.params;
 
