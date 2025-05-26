@@ -2,7 +2,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user-model");
 const World = require("../models/World");
-const { upgradeUserPlan, renewUserPlan } = require("../services/userServices");
+const { upgradePlan, renewPlan } = require("../services/userServices");
 
 const router = express.Router();
 
@@ -41,7 +41,7 @@ router.get("/me", authenticateToken, async (req, res) => {
 router.put("/upgrade", authenticateToken, async (req, res) => {
   const { newPlan } = req.body;
   try {
-    const updatedUser = await upgradeUserPlan(req.user.userId, newPlan);
+    const updatedUser = await upgradePlan(req.user.userId, newPlan);
     res.json({ message: "Updated plan", plan: updatedUser.plan });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -51,7 +51,7 @@ router.put("/upgrade", authenticateToken, async (req, res) => {
 // PUT /api/user/renew → Renovar plan del usuario
 router.put("/renew", authenticateToken, async (req, res) => {
   try {
-    const updatedUser = await renewUserPlan(req.user.userId);
+    const updatedUser = await renewPlan(req.user.userId);
     res.json({ message: "Renewed plan", expiresAt: updatedUser.planExpiresAt });
   } catch (err) {
     res.status(400).json({ error: err.message });
