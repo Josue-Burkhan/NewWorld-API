@@ -379,6 +379,9 @@
                 },
                 "type": {
                   "example": "any"
+                },
+                "world": {
+                  "example": "any"
                 }
               }
             }

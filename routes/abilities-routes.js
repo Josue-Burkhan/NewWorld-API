@@ -46,7 +46,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
 
 // POST - Crear nueva habilidad
 router.post("/", authMiddleware, enforceLimit(Ability), async (req, res) => {
-  const { name, description, type } = req.body;
+  const { name, description, type, world } = req.body;
 
   try {
     const newAbility = new Ability({
