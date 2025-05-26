@@ -594,6 +594,9 @@
                 },
                 "name": {
                   "example": "any"
+                },
+                "world": {
+                  "example": "any"
                 }
               }
             }
@@ -797,6 +800,9 @@
               "properties": {
                 "name": {
                   "example": "any"
+                },
+                "world": {
+                  "example": "any"
                 }
               }
             }
@@ -987,6 +993,9 @@
               "type": "object",
               "properties": {
                 "name": {
+                  "example": "any"
+                },
+                "world": {
                   "example": "any"
                 }
               }
@@ -1197,6 +1206,9 @@
               "properties": {
                 "name": {
                   "example": "any"
+                },
+                "world": {
+                  "example": "any"
                 }
               }
             }
@@ -1399,6 +1411,9 @@
               "type": "object",
               "properties": {
                 "name": {
+                  "example": "any"
+                },
+                "world": {
                   "example": "any"
                 }
               }
@@ -1609,6 +1624,9 @@
               "properties": {
                 "name": {
                   "example": "any"
+                },
+                "world": {
+                  "example": "any"
                 }
               }
             }
@@ -1811,6 +1829,9 @@
               "type": "object",
               "properties": {
                 "name": {
+                  "example": "any"
+                },
+                "world": {
                   "example": "any"
                 }
               }
@@ -2015,6 +2036,9 @@
               "properties": {
                 "name": {
                   "example": "any"
+                },
+                "world": {
+                  "example": "any"
                 }
               }
             }
@@ -2217,6 +2241,9 @@
               "type": "object",
               "properties": {
                 "name": {
+                  "example": "any"
+                },
+                "world": {
                   "example": "any"
                 }
               }
@@ -2421,6 +2448,9 @@
               "properties": {
                 "name": {
                   "example": "any"
+                },
+                "world": {
+                  "example": "any"
                 }
               }
             }
@@ -2622,7 +2652,10 @@
             "schema": {
               "type": "object",
               "properties": {
-                "name": {
+                "title": {
+                  "example": "any"
+                },
+                "world": {
                   "example": "any"
                 }
               }
@@ -2712,7 +2745,7 @@
             "schema": {
               "type": "object",
               "properties": {
-                "name": {
+                "title": {
                   "example": "any"
                 }
               }
@@ -2826,6 +2859,9 @@
               "type": "object",
               "properties": {
                 "name": {
+                  "example": "any"
+                },
+                "world": {
                   "example": "any"
                 }
               }
@@ -3029,6 +3065,9 @@
               "type": "object",
               "properties": {
                 "name": {
+                  "example": "any"
+                },
+                "world": {
                   "example": "any"
                 }
               }
