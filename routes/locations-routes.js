@@ -45,7 +45,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
 // POST - Create location
 router.post("/", authMiddleware, enforceLimit(Place), async (req, res) => {
   try {
-    const i = req.body.name;
+    const i = req.body.name || req.body.world;
     const userId = req.user.userId;
     const newPlace = new Place({ ...req.body, owner: userId });
 

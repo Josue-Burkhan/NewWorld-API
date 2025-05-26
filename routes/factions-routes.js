@@ -58,7 +58,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
 // POST - Create faction
 router.post("/", authMiddleware, enforceLimit(Faction), async (req, res) => {
   try {
-    const i = req.body.name;
+    const i = req.body.name || req.body.world;
     const newFaction = new Faction({
       ...req.body,
       owner: req.user.userId

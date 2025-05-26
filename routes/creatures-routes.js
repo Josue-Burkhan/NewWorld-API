@@ -45,7 +45,7 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", enforceLimit(Creature), async (req, res) => {
   try {
-    const i = req.body.name;
+    const i = req.body.name || req.body.world;
     const newCreature = new Creature({
       ...req.body,
       owner: req.user.userId

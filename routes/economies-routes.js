@@ -44,7 +44,7 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", enforceLimit(Economy), async (req, res) => {
     try {
-        const i = req.body.name;
+        const i = req.body.name || req.body.world;
         const newEconomy = new Economy({
             ...req.body,
             owner: req.user.userId

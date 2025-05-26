@@ -28,7 +28,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
 // POST - Crear nuevo evento (con límite por tipo de usuario)
 router.post("/", authMiddleware, enforceLimit(Event), async (req, res) => {
   try {
-    const i = req.body.name;
+    const i = req.body.name || req.body.world;
     const newEvent = new Event({
       ...req.body,
       owner: req.user.userId

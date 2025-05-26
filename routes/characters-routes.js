@@ -97,7 +97,7 @@ router.post("/", authMiddleware, async (req, res) => {
     if (!allowed) {
       return res.status(403).json({ message: "Character creation limit reached for your account type" });
     }
-    const { name} = req.body;
+    const {name, world} = req.body;
 
     const formattedCharacter = {
       ...req.body,
@@ -120,6 +120,7 @@ router.post("/", authMiddleware, async (req, res) => {
           description: event.description || "",
         })),
       },
+      world,
       owner: userId,
     };
 

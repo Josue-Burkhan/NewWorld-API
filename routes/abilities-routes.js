@@ -53,6 +53,7 @@ router.post("/", authMiddleware, enforceLimit(Ability), async (req, res) => {
       name,
       description,
       type,
+      world,
       owner: req.user.userId
     });
 

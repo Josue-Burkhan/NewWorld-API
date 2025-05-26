@@ -55,7 +55,7 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", enforceLimit(Story), async (req, res) => {
     try {
-        const i = req.body.title;
+        const i = req.body.title || req.body.world;
         const newStory = new Story({
             ...req.body,
             owner: req.user.userId

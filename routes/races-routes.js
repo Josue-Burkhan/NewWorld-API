@@ -46,7 +46,7 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", enforceLimit(Race), async (req, res) => {
     try {
-        const i = req.body.name;
+        const i = req.body.name || req.body.world;
         const newRace = new Race({
             ...req.body,
             owner: req.user.userId

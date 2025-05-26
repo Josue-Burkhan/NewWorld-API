@@ -45,7 +45,7 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", enforceLimit(Religion), async (req, res) => {
   try {
-    const i = req.body.name;
+    const i = req.body.name || req.body.world;
     const newReligion = new Religion({
       ...req.body,
       owner: req.user.userId
