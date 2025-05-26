@@ -46,6 +46,7 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", enforceLimit(Race), async (req, res) => {
     try {
+        const i = req.body.name;
         const newRace = new Race({
             ...req.body,
             owner: req.user.userId
@@ -58,6 +59,7 @@ router.post("/", enforceLimit(Race), async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
+    const i = req.body.name; 
     try {
         const updated = await Race.findOneAndUpdate(
             { _id: req.params.id, owner: req.user.userId },

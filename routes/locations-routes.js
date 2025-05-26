@@ -45,6 +45,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
 // POST - Create location
 router.post("/", authMiddleware, enforceLimit(Place), async (req, res) => {
   try {
+    const i = req.body.name;
     const userId = req.user.userId;
     const newPlace = new Place({ ...req.body, owner: userId });
 
@@ -57,6 +58,7 @@ router.post("/", authMiddleware, enforceLimit(Place), async (req, res) => {
 
 // PUT update location
 router.put("/:id", authMiddleware, async (req, res) => {
+  const i = req.body.name; 
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {

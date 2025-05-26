@@ -46,9 +46,13 @@ router.get("/:id", authMiddleware, async (req, res) => {
 
 // POST - Crear nueva habilidad
 router.post("/", authMiddleware, enforceLimit(Ability), async (req, res) => {
+  const { name, description, type } = req.body;
+
   try {
     const newAbility = new Ability({
-      ...req.body,
+      name,
+      description,
+      type,
       owner: req.user.userId
     });
 
@@ -59,8 +63,10 @@ router.post("/", authMiddleware, enforceLimit(Ability), async (req, res) => {
   }
 });
 
+
 // PUT - Actualizar habilidad
 router.put("/:id", authMiddleware, async (req, res) => {
+  const i = req.body.name; 
   try {
     const updatedAbility = await Ability.findOneAndUpdate(
       { _id: req.params.id, owner: req.user.userId },

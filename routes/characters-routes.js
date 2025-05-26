@@ -97,9 +97,11 @@ router.post("/", authMiddleware, async (req, res) => {
     if (!allowed) {
       return res.status(403).json({ message: "Character creation limit reached for your account type" });
     }
+    const { name} = req.body;
 
     const formattedCharacter = {
       ...req.body,
+      name,
       age: Number(req.body.age) || 0,
       appearance: {
         ...req.body.appearance,
@@ -135,6 +137,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
 // PUT - Update a character by ID
 router.put("/:id", authMiddleware, async (req, res) => {
+  const i = req.body.name; 
   try {
     const { id } = req.params;
 

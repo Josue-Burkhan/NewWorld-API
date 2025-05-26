@@ -58,6 +58,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
 // POST - Create faction
 router.post("/", authMiddleware, enforceLimit(Faction), async (req, res) => {
   try {
+    const i = req.body.name;
     const newFaction = new Faction({
       ...req.body,
       owner: req.user.userId
@@ -72,6 +73,7 @@ router.post("/", authMiddleware, enforceLimit(Faction), async (req, res) => {
 
 // PUT - Update faction
 router.put("/:id", authMiddleware, async (req, res) => {
+  const i = req.body.name; 
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {

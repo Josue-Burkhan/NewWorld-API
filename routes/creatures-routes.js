@@ -45,6 +45,7 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", enforceLimit(Creature), async (req, res) => {
   try {
+    const i = req.body.name;
     const newCreature = new Creature({
       ...req.body,
       owner: req.user.userId
@@ -57,6 +58,7 @@ router.post("/", enforceLimit(Creature), async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
+  const i = req.body.name; 
   try {
     const updated = await Creature.findOneAndUpdate(
       { _id: req.params.id, owner: req.user.userId },

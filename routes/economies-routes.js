@@ -44,6 +44,7 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", enforceLimit(Economy), async (req, res) => {
     try {
+        const i = req.body.name;
         const newEconomy = new Economy({
             ...req.body,
             owner: req.user.userId
@@ -56,6 +57,7 @@ router.post("/", enforceLimit(Economy), async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
+    const i = req.body.name; 
     try {
         const updated = await Economy.findOneAndUpdate(
             { _id: req.params.id, owner: req.user.userId },

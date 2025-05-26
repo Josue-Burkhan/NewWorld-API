@@ -57,6 +57,7 @@ router.get("/:id", async (req, res) => {
 // POST - Crear nuevo item
 router.post("/", authMiddleware, enforceLimit(Item), async (req, res) => {
   try {
+    const i = req.body.name;
     const newItem = new Item({
       ...req.body,
       owner: req.user.userId
@@ -71,6 +72,7 @@ router.post("/", authMiddleware, enforceLimit(Item), async (req, res) => {
 
 // PUT - Actualizar item
 router.put("/:id", async (req, res) => {
+  const i = req.body.name; 
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ message: "Invalid item ID" });

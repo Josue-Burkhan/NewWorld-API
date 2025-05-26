@@ -45,6 +45,7 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", enforceLimit(Religion), async (req, res) => {
   try {
+    const i = req.body.name;
     const newReligion = new Religion({
       ...req.body,
       owner: req.user.userId
@@ -57,6 +58,7 @@ router.post("/", enforceLimit(Religion), async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
+  const i = req.body.name; 
   try {
     const updated = await Religion.findOneAndUpdate(
       { _id: req.params.id, owner: req.user.userId },

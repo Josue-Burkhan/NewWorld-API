@@ -28,6 +28,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
 // POST - Crear nuevo idioma (con límite por tipo de usuario)
 router.post("/", authMiddleware, enforceLimit(Language), async (req, res) => {
     try {
+        const i = req.body.name;
         const newLanguage = new Language({
             ...req.body,
             owner: req.user.userId
@@ -42,6 +43,7 @@ router.post("/", authMiddleware, enforceLimit(Language), async (req, res) => {
 
 // PUT - Actualizar idioma existente
 router.put("/:id", authMiddleware, async (req, res) => {
+    const i = req.body.name; 
     try {
         const updatedLanguage = await Language.findOneAndUpdate(
             { _id: req.params.id, owner: req.user.userId },
