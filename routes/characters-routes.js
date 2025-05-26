@@ -13,12 +13,12 @@ async function canCreateCharacter(userId) {
 
   const characterCount = await Character.countDocuments({ owner: userId });
 
-  switch (user.accountType) {
-    case "Free":
+  switch ((user.accountType || "").toLowerCase()) {
+    case "free":
       return characterCount < 80;
-    case "Premium":
+    case "premium":
       return characterCount < 505;
-    case "Creator of Worlds":
+    case "creator of worlds":
       return true;
     default:
       return false;
@@ -29,17 +29,17 @@ async function canCreateCharacter(userId) {
 router.get("/", authMiddleware, async (req, res) => {
   try {
     const characters = await Character.find({ owner: req.user.userId })
-      .populate({ path: "abilities",        select: "_id name" })
-      .populate({ path: "weapons",          select: "_id name" })
-      .populate({ path: "faction",          select: "_id name" })
-      .populate({ path: "location",         select: "_id name" })
-      .populate({ path: "powerSystem",      select: "_id name" })
-      .populate({ path: "religion",         select: "_id name" })
-      .populate({ path: "creature",         select: "_id name" })
-      .populate({ path: "economy",          select: "_id name" })
-      .populate({ path: "story",            select: "_id title" })
-      .populate({ path: "race",             select: "_id name" })
-      .populate({ path: "relationships.family",  select: "_id name" })
+      .populate({ path: "abilities", select: "_id name" })
+      .populate({ path: "weapons", select: "_id name" })
+      .populate({ path: "faction", select: "_id name" })
+      .populate({ path: "location", select: "_id name" })
+      .populate({ path: "powerSystem", select: "_id name" })
+      .populate({ path: "religion", select: "_id name" })
+      .populate({ path: "creature", select: "_id name" })
+      .populate({ path: "economy", select: "_id name" })
+      .populate({ path: "story", select: "_id title" })
+      .populate({ path: "race", select: "_id name" })
+      .populate({ path: "relationships.family", select: "_id name" })
       .populate({ path: "relationships.friends", select: "_id name" })
       .populate({ path: "relationships.enemies", select: "_id name" })
       .populate({ path: "relationships.romance", select: "_id name" });
@@ -62,17 +62,17 @@ router.get("/:id", authMiddleware, async (req, res) => {
     }
 
     const character = await Character.findOne({ _id: req.params.id })
-      .populate({ path: "abilities",        select: "_id name" })
-      .populate({ path: "weapons",          select: "_id name" })
-      .populate({ path: "faction",          select: "_id name" })
-      .populate({ path: "location",         select: "_id name" })
-      .populate({ path: "powerSystem",      select: "_id name" })
-      .populate({ path: "religion",         select: "_id name" })
-      .populate({ path: "creature",         select: "_id name" })
-      .populate({ path: "economy",          select: "_id name" })
-      .populate({ path: "story",            select: "_id title" })
-      .populate({ path: "race",             select: "_id name" })
-      .populate({ path: "relationships.family",  select: "_id name" })
+      .populate({ path: "abilities", select: "_id name" })
+      .populate({ path: "weapons", select: "_id name" })
+      .populate({ path: "faction", select: "_id name" })
+      .populate({ path: "location", select: "_id name" })
+      .populate({ path: "powerSystem", select: "_id name" })
+      .populate({ path: "religion", select: "_id name" })
+      .populate({ path: "creature", select: "_id name" })
+      .populate({ path: "economy", select: "_id name" })
+      .populate({ path: "story", select: "_id title" })
+      .populate({ path: "race", select: "_id name" })
+      .populate({ path: "relationships.family", select: "_id name" })
       .populate({ path: "relationships.friends", select: "_id name" })
       .populate({ path: "relationships.enemies", select: "_id name" })
       .populate({ path: "relationships.romance", select: "_id name" });
@@ -97,7 +97,7 @@ router.post("/", authMiddleware, async (req, res) => {
     if (!allowed) {
       return res.status(403).json({ message: "Character creation limit reached for your account type" });
     }
-    const {name, world} = req.body;
+    const { name, world } = req.body;
 
     const formattedCharacter = {
       ...req.body,
@@ -138,7 +138,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
 // PUT - Update a character by ID
 router.put("/:id", authMiddleware, async (req, res) => {
-  const i = req.body.name; 
+  const i = req.body.name;
   try {
     const { id } = req.params;
 
