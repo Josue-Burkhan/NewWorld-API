@@ -1,3 +1,5 @@
+const User = require('../models/user-model');
+
 function getWorldLimit(plan) {
   if (plan === 'Free') return 1;
   if (plan === 'Premium') return 5;
@@ -24,7 +26,10 @@ function calculateNewExpiration(currentDate, planType) {
   return date;
 }
 
-async function upgradePlan(user, newPlan, planType = 'Monthly') {
+async function upgradePlan(userId, newPlan, planType = 'Monthly') {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('User not found');
+
   user.plan = newPlan;
   user.planType = planType;
   user.planExpiresAt = calculateNewExpiration(new Date(), planType);
@@ -32,8 +37,12 @@ async function upgradePlan(user, newPlan, planType = 'Monthly') {
   return user;
 }
 
-async function renewPlan(user) {
+async function renewPlan(userId) {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('User not found');
+
   if (user.plan === 'Free') return user;
+
   user.planExpiresAt = calculateNewExpiration(new Date(), user.planType);
   await user.save();
   return user;
