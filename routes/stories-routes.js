@@ -55,7 +55,7 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", enforceLimit(Story), async (req, res) => {
     try {
-        const i = req.body.name;
+        const i = req.body.title;
         const newStory = new Story({
             ...req.body,
             owner: req.user.userId
@@ -68,7 +68,7 @@ router.post("/", enforceLimit(Story), async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
-    const i = req.body.name; 
+    const i = req.body.title; 
     try {
         const updated = await Story.findOneAndUpdate(
             { _id: req.params.id, owner: req.user.userId },
