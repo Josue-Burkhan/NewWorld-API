@@ -3,6 +3,8 @@ const router = express.Router();
 const Event = require("../models/Event");
 const authMiddleware = require("../middleware/authMiddleware");
 const enforceLimit = require("../middleware/limitByUserType");
+const autoPopulateReferences = require("../utils/autoPopulateRefs");
+
 
 // GET - Obtener todos los eventos del usuario
 router.get("/", authMiddleware, async (req, res) => {
@@ -27,8 +29,10 @@ router.get("/:id", authMiddleware, async (req, res) => {
 
 // POST - Crear nuevo evento (con límite por tipo de usuario)
 router.post("/", authMiddleware, enforceLimit(Event), async (req, res) => {
+  const i = req.body.name || req.body.world;
   try {
     const i = req.body.name || req.body.world;
+    await autoPopulateReferences(req.body, req.user.userId);
     const newEvent = new Event({
       ...req.body,
       owner: req.user.userId
@@ -43,8 +47,9 @@ router.post("/", authMiddleware, enforceLimit(Event), async (req, res) => {
 
 // PUT - Actualizar evento existente
 router.put("/:id", authMiddleware, async (req, res) => {
-  const i = req.body.name; 
+  const i = req.body.name || req.body.world;
   try {
+    await autoPopulateReferences(req.body, req.user.userId);
     const updatedEvent = await Event.findOneAndUpdate(
       { _id: req.params.id, owner: req.user.userId },
       req.body,

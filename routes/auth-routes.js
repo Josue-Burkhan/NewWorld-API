@@ -2,6 +2,7 @@ const express = require("express");
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
+const autoPopulateRefs = require("../utils/autoPopulateRefs");
 
 
 router.get("/google", (req, res, next) => {

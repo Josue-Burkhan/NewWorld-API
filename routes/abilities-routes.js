@@ -3,6 +3,8 @@ const router = express.Router();
 const Ability = require("../models/Ability");
 const authMiddleware = require("../middleware/authMiddleware");
 const enforceLimit = require("../middleware/limitByUserType");
+const autoPopulateReferences = require("../utils/autoPopulateRefs");
+
 
 // GET - Todas las habilidades del usuario
 router.get("/", authMiddleware, async (req, res) => {
@@ -46,40 +48,59 @@ router.get("/:id", authMiddleware, async (req, res) => {
 
 // POST - Crear nueva habilidad
 router.post("/", authMiddleware, enforceLimit(Ability), async (req, res) => {
-  const { name, description, type, world } = req.body;
-
   try {
-    const newAbility = new Ability({
-      name,
-      description,
-      type,
-      world,
-      owner: req.user.userId
+    const userId = req.user.userId;
+    const worldId = req.body.world;
+
+    const processedData = await autoPopulateReferences("Ability", {
+      ...req.body,
+      owner: userId,
+      world: worldId
     });
 
+    const newAbility = new Ability(processedData);
     await newAbility.save();
-    res.status(201).json(newAbility);
+
+    const abilityObject = newAbility.toObject();
+    Object.keys(abilityObject).forEach(key => {
+      if (key.startsWith("raw")) delete abilityObject[key];
+    });
+
+    res.status(201).json(abilityObject);
   } catch (error) {
     res.status(400).json({ message: "Error creating ability", error: error.message });
   }
 });
 
 
+
 // PUT - Actualizar habilidad
 router.put("/:id", authMiddleware, async (req, res) => {
-  const i = req.body.name; 
   try {
-    const updatedAbility = await Ability.findOneAndUpdate(
-      { _id: req.params.id, owner: req.user.userId },
-      req.body,
-      { new: true }
-    );
-    if (!updatedAbility) return res.status(404).json({ message: "Ability not found" });
-    res.json(updatedAbility);
+    const userId = req.user.userId;
+    const { id } = req.params;
+
+    const ability = await Ability.findOne({ _id: id, owner: userId });
+    if (!ability) return res.status(404).json({ message: "Ability not found" });
+
+    const processedData = await autoPopulateReferences("Ability", req.body);
+
+    const updatedAbility = await Ability.findByIdAndUpdate(id, processedData, {
+      new: true,
+      runValidators: true
+    });
+
+    const abilityObject = updatedAbility.toObject();
+    Object.keys(abilityObject).forEach(key => {
+      if (key.startsWith("raw")) delete abilityObject[key];
+    });
+
+    res.json(abilityObject);
   } catch (error) {
-    res.status(400).json({ message: "Error updating ability", error });
+    res.status(400).json({ message: "Error updating ability", error: error.message });
   }
 });
+
 
 // DELETE - Eliminar habilidad
 router.delete("/:id", authMiddleware, async (req, res) => {

@@ -16,10 +16,19 @@ const eventSchema = new mongoose.Schema({
   creatures: [{ type: mongoose.Schema.Types.ObjectId, ref: "Creature" }],
   religion: { type: mongoose.Schema.Types.ObjectId, ref: "Religion" },
 
-  // Texto libre (máx 250)
+  // Raw fields para autocompletar si no existe
+  rawCharactersInvolved: String,
+  rawFactionsInvolved: String,
+  rawLocations: String,
+  rawItemsUsed: String,
+  rawAbilitiesShown: String,
+  rawRelatedStories: String,
+  rawPowerSystem: String,
+  rawCreatures: String,
+  rawReligion: String,
+
   customNotes: { type: String, maxlength: 250 },
 
-  // Propiedades necesarias
   world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
 }, { collection: "newworld.event", timestamps: true });

@@ -8,22 +8,27 @@ const raceSchema = new mongoose.Schema({
   averageHeight: String,
   averageWeight: String,
   culture: String,
+
   language: { type: mongoose.Schema.Types.ObjectId, ref: "Language" },
   rawLanguage: String,
 
   // Vinculaciones
   characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
-  locations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
-  religions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Religion" }],
-  stories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
-  events: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
-  powerSystems: [{ type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" }],
-
   rawCharacters: [String],
+
+  locations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
   rawLocations: [String],
+
+  religions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Religion" }],
   rawReligions: [String],
+
+  stories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
   rawStories: [String],
+
+  events: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
   rawEvents: [String],
+
+  powerSystems: [{ type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" }],
   rawPowerSystems: [String],
 
   // Identificación

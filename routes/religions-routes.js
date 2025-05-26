@@ -3,6 +3,8 @@ const router = express.Router();
 const Religion = require("../models/Religion");
 const authMiddleware = require("../middleware/authMiddleware");
 const enforceLimit = require("../middleware/limitByUserType");
+const autoPopulateReferences = require("../utils/autoPopulateRefs");
+
 
 router.use(authMiddleware);
 
@@ -44,12 +46,15 @@ router.get("/:id", async (req, res) => {
 });
 
 router.post("/", enforceLimit(Religion), async (req, res) => {
+  const i = req.body.name || req.body.world;
   try {
-    const i = req.body.name || req.body.world;
+    await autoPopulateReferences(req.body, req.user.userId);
+
     const newReligion = new Religion({
       ...req.body,
       owner: req.user.userId
     });
+
     const saved = await newReligion.save();
     res.status(201).json(saved);
   } catch (err) {
@@ -58,21 +63,26 @@ router.post("/", enforceLimit(Religion), async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
-  const i = req.body.name; 
+  const i = req.body.name || req.body.world;
   try {
+    await autoPopulateReferences(req.body, req.user.userId);
+
     const updated = await Religion.findOneAndUpdate(
       { _id: req.params.id, owner: req.user.userId },
       req.body,
       { new: true }
     );
+
     if (!updated) {
       return res.status(404).json({ message: "Religion not found" });
     }
+
     res.json(updated);
   } catch (err) {
     res.status(400).json({ message: "Error updating religion" });
   }
 });
+
 
 router.delete("/:id", async (req, res) => {
   try {

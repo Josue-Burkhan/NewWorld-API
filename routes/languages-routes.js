@@ -3,6 +3,8 @@ const router = express.Router();
 const Language = require("../models/Language");
 const authMiddleware = require("../middleware/authMiddleware");
 const enforceLimit = require("../middleware/limitByUserType");
+const autoPopulateReferences = require("../utils/autoPopulateRefs");
+
 
 // GET - Obtener todos los idiomas del usuario
 router.get("/", authMiddleware, async (req, res) => {
@@ -27,8 +29,10 @@ router.get("/:id", authMiddleware, async (req, res) => {
 
 // POST - Crear nuevo idioma (con límite por tipo de usuario)
 router.post("/", authMiddleware, enforceLimit(Language), async (req, res) => {
+    const i = req.body.name || req.body.world;
     try {
-        const i = req.body.name || req.body.world;
+        await autoPopulateReferences(req.body, req.user.userId);
+
         const newLanguage = new Language({
             ...req.body,
             owner: req.user.userId
@@ -43,19 +47,23 @@ router.post("/", authMiddleware, enforceLimit(Language), async (req, res) => {
 
 // PUT - Actualizar idioma existente
 router.put("/:id", authMiddleware, async (req, res) => {
-    const i = req.body.name; 
+    const i = req.body.name || req.body.world;
     try {
+        await autoPopulateReferences(req.body, req.user.userId);
+
         const updatedLanguage = await Language.findOneAndUpdate(
             { _id: req.params.id, owner: req.user.userId },
             req.body,
             { new: true }
         );
+
         if (!updatedLanguage) return res.status(404).json({ message: "Language not found" });
         res.json(updatedLanguage);
     } catch (error) {
         res.status(400).json({ message: "Error updating language", error });
     }
 });
+
 
 // DELETE - Eliminar idioma
 router.delete("/:id", authMiddleware, async (req, res) => {

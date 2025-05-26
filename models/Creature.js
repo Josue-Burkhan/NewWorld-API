@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const creatureSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    speciesType: { type: String },  // ejemplo: dragón, gólem, quimera
+    speciesType: { type: String },
     description: { type: String },
     habitat: { type: String },
     behavior: { type: String },
@@ -19,12 +19,23 @@ const creatureSchema = new mongoose.Schema({
     relatedPowerSystem: { type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" },
     associatedReligion: { type: mongoose.Schema.Types.ObjectId, ref: "Religion" },
 
-    // Libre
+    // Campos raw alineados al mismo nivel
+    rawAssociatedFactions: [String],
+    rawLinkedEvents: [String],
+    rawAppearsInStories: [String],
+    rawOriginLocation: String,
+    rawRelatedPowerSystem: String,
+    rawAssociatedReligion: String,
+
+    // Notas
     customNotes: { type: String, maxlength: 250 },
 
     // Propiedades necesarias
     world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
-}, { collection: "newworld.creature", timestamps: true });
+}, {
+    collection: "newworld.creature",
+    timestamps: true
+});
 
 module.exports = mongoose.model("Creature", creatureSchema);

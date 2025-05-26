@@ -371,15 +371,6 @@
             "schema": {
               "type": "object",
               "properties": {
-                "name": {
-                  "example": "any"
-                },
-                "description": {
-                  "example": "any"
-                },
-                "type": {
-                  "example": "any"
-                },
                 "world": {
                   "example": "any"
                 }
@@ -463,18 +454,6 @@
             "name": "token",
             "in": "query",
             "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "example": "any"
-                }
-              }
-            }
           }
         ],
         "responses": {
@@ -579,38 +558,11 @@
             "name": "token",
             "in": "query",
             "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "age": {
-                  "example": "any"
-                },
-                "appearance": {
-                  "example": "any"
-                },
-                "history": {
-                  "example": "any"
-                },
-                "name": {
-                  "example": "any"
-                },
-                "world": {
-                  "example": "any"
-                }
-              }
-            }
           }
         ],
         "responses": {
           "201": {
             "description": "Created"
-          },
-          "400": {
-            "description": "Bad Request"
           },
           "401": {
             "description": "Unauthorized"
@@ -684,18 +636,6 @@
             "name": "token",
             "in": "query",
             "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "example": "any"
-                }
-              }
-            }
           }
         ],
         "responses": {
@@ -713,6 +653,9 @@
           },
           "404": {
             "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       },
@@ -893,6 +836,9 @@
               "properties": {
                 "name": {
                   "example": "any"
+                },
+                "world": {
+                  "example": "any"
                 }
               }
             }
@@ -904,6 +850,12 @@
           },
           "400": {
             "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
           },
           "404": {
             "description": "Not Found"
@@ -1092,6 +1044,9 @@
               "type": "object",
               "properties": {
                 "name": {
+                  "example": "any"
+                },
+                "world": {
                   "example": "any"
                 }
               }
@@ -1302,6 +1257,9 @@
               "properties": {
                 "name": {
                   "example": "any"
+                },
+                "world": {
+                  "example": "any"
                 }
               }
             }
@@ -1510,6 +1468,9 @@
               "type": "object",
               "properties": {
                 "name": {
+                  "example": "any"
+                },
+                "world": {
                   "example": "any"
                 }
               }
@@ -1720,6 +1681,9 @@
               "properties": {
                 "name": {
                   "example": "any"
+                },
+                "world": {
+                  "example": "any"
                 }
               }
             }
@@ -1925,6 +1889,9 @@
               "type": "object",
               "properties": {
                 "name": {
+                  "example": "any"
+                },
+                "world": {
                   "example": "any"
                 }
               }
@@ -2132,6 +2099,9 @@
               "properties": {
                 "name": {
                   "example": "any"
+                },
+                "world": {
+                  "example": "any"
                 }
               }
             }
@@ -2337,6 +2307,9 @@
               "type": "object",
               "properties": {
                 "name": {
+                  "example": "any"
+                },
+                "world": {
                   "example": "any"
                 }
               }
@@ -2544,6 +2517,9 @@
               "properties": {
                 "name": {
                   "example": "any"
+                },
+                "world": {
+                  "example": "any"
                 }
               }
             }
@@ -2749,6 +2725,9 @@
               "type": "object",
               "properties": {
                 "title": {
+                  "example": "any"
+                },
+                "world": {
                   "example": "any"
                 }
               }
@@ -2956,6 +2935,9 @@
               "properties": {
                 "name": {
                   "example": "any"
+                },
+                "world": {
+                  "example": "any"
                 }
               }
             }
@@ -3161,6 +3143,9 @@
               "type": "object",
               "properties": {
                 "name": {
+                  "example": "any"
+                },
+                "world": {
                   "example": "any"
                 }
               }

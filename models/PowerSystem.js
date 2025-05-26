@@ -4,25 +4,35 @@ const powerSystemSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String },
 
-  sourceOfPower: { type: String },  // ejemplo: "energía espiritual", "nanotecnología"
-  rules: { type: String },          // reglas de uso
-  limitations: { type: String },    // restricciones, costos, debilidades
-  classificationTypes: [String],   // tipos: elemental, mental, físico, etc.
+  sourceOfPower: { type: String },
+  rules: { type: String },
+  limitations: { type: String },
+  classificationTypes: [String],
   symbolsOrMarks: { type: String },
 
-  // Relación con otras entidades
   usedByCharacters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
-  relatedAbilities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
-  usedInFactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
-  associatedEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
-  appearsInStories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
-  linkedCreatures: [{ type: mongoose.Schema.Types.ObjectId, ref: "Creature" }],
-  linkedReligion: { type: mongoose.Schema.Types.ObjectId, ref: "Religion" },
+  rawUsedByCharacters: [String],
 
-  // Texto libre
+  relatedAbilities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
+  rawRelatedAbilities: [String],
+
+  usedInFactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
+  rawUsedInFactions: [String],
+
+  associatedEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+  rawAssociatedEvents: [String],
+
+  appearsInStories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
+  rawAppearsInStories: [String],
+
+  linkedCreatures: [{ type: mongoose.Schema.Types.ObjectId, ref: "Creature" }],
+  rawLinkedCreatures: [String],
+
+  linkedReligion: { type: mongoose.Schema.Types.ObjectId, ref: "Religion" },
+  rawLinkedReligion: String,
+
   customNotes: { type: String, maxlength: 250 },
 
-  // Propiedades necesarias
   world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
 }, { collection: "newworld.powersystem", timestamps: true });

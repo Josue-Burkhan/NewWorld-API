@@ -8,11 +8,17 @@ const languageSchema = new mongoose.Schema({
 
   // Relaciones con otras entidades
   usedByRaces: [{ type: mongoose.Schema.Types.ObjectId, ref: "Race" }],
+  rawUsedByRaces: String,
   usedByFactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
+  rawUsedByFactions: String,
   usedByCharacters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+  rawUsedByCharacters: String,
   usedInRegions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
+  rawUsedInRegions: String,
   appearsInStories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
+  rawAppearsInStories: String,
   relatedToReligion: { type: mongoose.Schema.Types.ObjectId, ref: "Religion" },
+  rawRelatedToReligion: String,
 
   // Extras
   isSacred: { type: Boolean, default: false },

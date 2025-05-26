@@ -15,22 +15,43 @@ const storySchema = new mongoose.Schema({
 
   // Elementos vinculados a la historia
   characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
-  locations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
-  items: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
-  events: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
-  factions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
-  abilities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
-  powerSystems: [{ type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" }],
-  creatures: [{ type: mongoose.Schema.Types.ObjectId, ref: "Creature" }],
-  religions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Religion" }],
-  technologies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Technology" }],
-  races: [{ type: mongoose.Schema.Types.ObjectId, ref: "Race" }],
-  economies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Economy" }],
+  rawCharacters: [String],
 
-  // Texto libre por si el usuario desea agregar algo no estructurado
+  locations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
+  rawLocations: [String],
+
+  items: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
+  rawItems: [String],
+
+  events: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+  rawEvents: [String],
+
+  factions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
+  rawFactions: [String],
+
+  abilities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
+  rawAbilities: [String],
+
+  powerSystems: [{ type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" }],
+  rawPowerSystems: [String],
+
+  creatures: [{ type: mongoose.Schema.Types.ObjectId, ref: "Creature" }],
+  rawCreatures: [String],
+
+  religions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Religion" }],
+  rawReligions: [String],
+
+  technologies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Technology" }],
+  rawTechnologies: [String],
+
+  races: [{ type: mongoose.Schema.Types.ObjectId, ref: "Race" }],
+  rawRaces: [String],
+
+  economies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Economy" }],
+  rawEconomies: [String],
+
   rawAssociations: [String],
 
-  // Propiedades base
   world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
 

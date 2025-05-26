@@ -4,22 +4,36 @@ const technologySchema = new mongoose.Schema({
     name: { type: String, required: true },
     description: String,
 
-    techType: { type: String }, // ejemplo: armamento, transporte, comunicaciones
-    origin: { type: String },   // quién la creó o cómo surgió
+    techType: { type: String },
+    origin: { type: String },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Character" },
-    yearCreated: Number,
-    currentUse: String,         // usos comunes o actuales
-    limitations: String,
-    energySource: String,       // si usa alguna fuente de energía
+    rawCreatedBy: String,
 
-    // Relaciones
+    yearCreated: Number,
+    currentUse: String,
+    limitations: String,
+    energySource: String,
+
     usedByCharacters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    rawUsedByCharacters: [String],
+
     usedByFactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
+    rawUsedByFactions: [String],
+
     linkedItems: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
+    rawLinkedItems: [String],
+
     linkedEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+    rawLinkedEvents: [String],
+
     appearsInStories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
+    rawAppearsInStories: [String],
+
     createdInLocation: { type: mongoose.Schema.Types.ObjectId, ref: "Location" },
+    rawCreatedInLocation: String,
+
     relatedPowerSystem: { type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" },
+    rawRelatedPowerSystem: String,
 
     notes: { type: String, maxlength: 250 },
 

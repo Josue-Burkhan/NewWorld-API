@@ -4,7 +4,6 @@ const economySchema = new mongoose.Schema({
     name: { type: String, required: true },
     description: { type: String, maxlength: 1000 },
 
-    // Detalles económicos
     currency: {
         name: String,
         symbol: String,
@@ -14,7 +13,7 @@ const economySchema = new mongoose.Schema({
     keyIndustries: [String],
     economicSystem: String,
 
-    // Relaciones con otras entidades
+    // Relaciones
     characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
     factions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
     locations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
@@ -22,10 +21,16 @@ const economySchema = new mongoose.Schema({
     races: [{ type: mongoose.Schema.Types.ObjectId, ref: "Race" }],
     stories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
 
-    // Texto libre adicional
-    rawAssociations: [String],
+    // Campos raw al mismo nivel
+    rawCharacters: String,
+    rawFactions: String,
+    rawLocations: String,
+    rawItems: String,
+    rawRaces: String,
+    rawStories: String,
 
-    // Propiedades base
+    rawAssociations: [String], // Esto lo dejas si lo usas para algo específico
+
     world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
 }, { collection: "newworld.economy", timestamps: true });

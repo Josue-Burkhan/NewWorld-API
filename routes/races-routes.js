@@ -3,6 +3,8 @@ const router = express.Router();
 const Race = require("../models/Race");
 const authMiddleware = require("../middleware/authMiddleware");
 const enforceLimit = require("../middleware/limitByUserType");
+const autoPopulateReferences = require("../utils/autoPopulateRefs");
+
 
 router.use(authMiddleware);
 
@@ -43,14 +45,16 @@ router.get("/:id", async (req, res) => {
         res.status(500).json({ message: "Error retrieving race" });
     }
 });
-
 router.post("/", enforceLimit(Race), async (req, res) => {
+    const i = req.body.name || req.body.world;
     try {
-        const i = req.body.name || req.body.world;
+        await autoPopulateReferences(req.body, req.user.userId);
+
         const newRace = new Race({
             ...req.body,
             owner: req.user.userId
         });
+
         const saved = await newRace.save();
         res.status(201).json(saved);
     } catch (err) {
@@ -59,21 +63,26 @@ router.post("/", enforceLimit(Race), async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
-    const i = req.body.name; 
+    const i = req.body.name || req.body.world;
     try {
+        await autoPopulateReferences(req.body, req.user.userId);
+
         const updated = await Race.findOneAndUpdate(
             { _id: req.params.id, owner: req.user.userId },
             req.body,
             { new: true }
         );
+
         if (!updated) {
             return res.status(404).json({ message: "Race not found" });
         }
+
         res.json(updated);
     } catch (err) {
         res.status(400).json({ message: "Error updating race" });
     }
 });
+
 
 router.delete("/:id", async (req, res) => {
     try {

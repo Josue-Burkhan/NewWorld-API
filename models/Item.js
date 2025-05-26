@@ -5,12 +5,12 @@ const itemSchema = new mongoose.Schema({
 
   // Descripción general
   description: { type: String },
-  type: { type: String }, // ej: arma, armadura, artefacto, herramienta, comida, etc.
+  type: { type: String },
   origin: { type: String },
   material: { type: String },
   weight: { type: Number },
-  value: { type: String }, // puede ser texto tipo "muy valioso", o número
-  rarity: { type: String }, // ej: común, raro, legendario, etc.
+  value: { type: String },
+  rarity: { type: String },
 
   // Relacionado con el mundo y su historia
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Character" },
@@ -23,16 +23,29 @@ const itemSchema = new mongoose.Schema({
   powerSystem: { type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" },
   language: { type: mongoose.Schema.Types.ObjectId, ref: "Language" },
 
+  // Raw fields para autocompletar
+  rawCreatedBy: String,
+  rawUsedBy: [String],
+  rawAssociatedFactions: [String],
+  rawAssociatedEvents: [String],
+  rawAssociatedStories: [String],
+  rawFoundInLocations: [String],
+  rawReligion: String,
+  rawPowerSystem: String,
+  rawLanguage: String,
+
   // Características especiales
   magicalProperties: [String],
   technologicalFeatures: [String],
   abilitiesGranted: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
+  rawAbilitiesGranted: [String],
   customEffects: [String],
 
   // Extras
   isUnique: { type: Boolean, default: false },
   isDestroyed: { type: Boolean, default: false },
   currentOwner: { type: mongoose.Schema.Types.ObjectId, ref: "Character" },
+  rawCurrentOwner: String,
 
   // Texto libre adicional (máx. 250 caracteres)
   customNotes: { type: String, maxlength: 250 },

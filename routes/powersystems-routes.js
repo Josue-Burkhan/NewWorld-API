@@ -3,6 +3,8 @@ const router = express.Router();
 const PowerSystem = require("../models/PowerSystem");
 const authMiddleware = require("../middleware/authMiddleware");
 const enforceLimit = require("../middleware/limitByUserType");
+const autoPopulateReferences = require("../utils/autoPopulateRefs");
+
 
 router.use(authMiddleware);
 
@@ -42,14 +44,16 @@ router.get("/:id", async (req, res) => {
         res.status(500).json({ message: "Error retrieving power system" });
     }
 });
-
 router.post("/", enforceLimit(PowerSystem), async (req, res) => {
+    const i = req.body.name || req.body.world;
     try {
-        const i = req.body.name || req.body.world;
+        await autoPopulateReferences(req.body, req.user.userId);
+
         const newPowerSystem = new PowerSystem({
             ...req.body,
             owner: req.user.userId
         });
+
         const saved = await newPowerSystem.save();
         res.status(201).json(saved);
     } catch (err) {
@@ -58,16 +62,20 @@ router.post("/", enforceLimit(PowerSystem), async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
-    const i = req.body.name; 
+    const i = req.body.name || req.body.world;
     try {
+        await autoPopulateReferences(req.body, req.user.userId);
+
         const updated = await PowerSystem.findOneAndUpdate(
             { _id: req.params.id, owner: req.user.userId },
             req.body,
             { new: true }
         );
+
         if (!updated) {
             return res.status(404).json({ message: "Power system not found" });
         }
+
         res.json(updated);
     } catch (err) {
         res.status(400).json({ message: "Error updating power system" });

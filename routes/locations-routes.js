@@ -5,6 +5,8 @@ const Place = require("../models/Location");
 const User = require("../models/user-model");
 const authMiddleware = require("../middleware/authMiddleware");
 const enforceLimit = require("../middleware/limitByUserType");
+const autoPopulateReferences = require("../utils/autoPopulateRefs");
+
 
 // GET all locations for the authenticated user
 router.get("/", authMiddleware, async (req, res) => {
@@ -44,8 +46,10 @@ router.get("/:id", authMiddleware, async (req, res) => {
 
 // POST - Create location
 router.post("/", authMiddleware, enforceLimit(Place), async (req, res) => {
+  const i = req.body.name || req.body.world;
   try {
-    const i = req.body.name || req.body.world;
+    await autoPopulateReferences(req.body, req.user.userId);
+
     const userId = req.user.userId;
     const newPlace = new Place({ ...req.body, owner: userId });
 
@@ -58,12 +62,13 @@ router.post("/", authMiddleware, enforceLimit(Place), async (req, res) => {
 
 // PUT update location
 router.put("/:id", authMiddleware, async (req, res) => {
-  const i = req.body.name; 
+  const i = req.body.name || req.body.world;
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid location ID" });
     }
+
     const place = await Place.findById(id);
     if (!place) return res.status(404).json({ message: "Place not found" });
 
@@ -71,12 +76,15 @@ router.put("/:id", authMiddleware, async (req, res) => {
       return res.status(403).json({ message: "Forbidden - You do not have permission to update this place" });
     }
 
+    await autoPopulateReferences(req.body, req.user.userId);
+
     const updatedPlace = await Place.findByIdAndUpdate(id, req.body, { new: true });
     res.json(updatedPlace);
   } catch (error) {
     res.status(400).json({ message: "Error updating place", error });
   }
 });
+
 
 // DELETE location
 router.delete("/:id", authMiddleware, async (req, res) => {

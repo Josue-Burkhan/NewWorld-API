@@ -5,6 +5,8 @@ const jwt = require("jsonwebtoken");
 const Character = require("../models/Character");
 const User = require("../models/user-model");
 const authMiddleware = require("../middleware/authMiddleware");
+const autoPopulateReferences = require("../utils/autoPopulateRefs");
+
 
 // Utility function to check user character limits
 async function canCreateCharacter(userId) {
@@ -97,30 +99,32 @@ router.post("/", authMiddleware, async (req, res) => {
     if (!allowed) {
       return res.status(403).json({ message: "Character creation limit reached for your account type" });
     }
-    const { name, world } = req.body;
+
+    // Crear entidades a partir de los raw
+    const enrichedBody = await autoPopulateReferences(req.body, userId);
 
     const formattedCharacter = {
-      ...req.body,
-      name,
-      age: Number(req.body.age) || 0,
+      ...enrichedBody,
+      name: enrichedBody.name,
+      age: Number(enrichedBody.age) || 0,
       appearance: {
-        ...req.body.appearance,
-        height: Number(req.body.appearance?.height) || 0,
-        weight: Number(req.body.appearance?.weight) || 0,
-        eyeColor: req.body.appearance?.eyeColor || "",
-        hairColor: req.body.appearance?.hairColor || "",
-        clothingStyle: req.body.appearance?.clothingStyle || "",
+        ...enrichedBody.appearance,
+        height: Number(enrichedBody.appearance?.height) || 0,
+        weight: Number(enrichedBody.appearance?.weight) || 0,
+        eyeColor: enrichedBody.appearance?.eyeColor || "",
+        hairColor: enrichedBody.appearance?.hairColor || "",
+        clothingStyle: enrichedBody.appearance?.clothingStyle || "",
       },
       history: {
-        ...req.body.history,
-        birthplace: req.body.history?.birthplace || "",
-        events: (req.body.history?.events || []).map((event) => ({
+        ...enrichedBody.history,
+        birthplace: enrichedBody.history?.birthplace || "",
+        events: (enrichedBody.history?.events || []).map((event) => ({
           ...event,
           year: Number(event.year) || 0,
           description: event.description || "",
         })),
       },
-      world,
+      world: enrichedBody.world,
       owner: userId,
     };
 
@@ -128,17 +132,12 @@ router.post("/", authMiddleware, async (req, res) => {
     await newCharacter.save();
     res.status(201).json(newCharacter);
   } catch (error) {
-    if (error.name === "ValidationError") {
-      res.status(400).json({ message: "Validation error", error: error.message });
-    } else {
-      res.status(500).json({ message: "Error creating character", error: error.message });
-    }
+    res.status(500).json({ message: "Error creating character", error: error.message });
   }
 });
 
 // PUT - Update a character by ID
 router.put("/:id", authMiddleware, async (req, res) => {
-  const i = req.body.name;
   try {
     const { id } = req.params;
 
@@ -152,20 +151,25 @@ router.put("/:id", authMiddleware, async (req, res) => {
     }
 
     if (character.owner.toString() !== req.user.userId) {
-      return res.status(403).json({ message: "Forbidden - You do not have permission to update this character" });
+      return res.status(403).json({ message: "Forbidden" });
     }
+
+    // Procesar los raw antes de actualizar
+    const enrichedBody = await autoPopulateReferences(req.body, req.user.userId);
 
     const updatedCharacter = await Character.findByIdAndUpdate(
       id,
-      req.body,
+      enrichedBody,
       { new: true, runValidators: true }
     );
 
     res.json(updatedCharacter);
   } catch (error) {
-    res.status(400).json({ message: "Error updating character", error: error.message });
+    res.status(500).json({ message: "Error updating character", error: error.message });
   }
 });
+
+
 
 // DELETE
 router.delete("/:id", authMiddleware, async (req, res) => {

@@ -3,6 +3,8 @@ const router = express.Router();
 const Economy = require("../models/Economy");
 const authMiddleware = require("../middleware/authMiddleware");
 const enforceLimit = require("../middleware/limitByUserType");
+const autoPopulateReferences = require("../utils/autoPopulateRefs");
+
 
 router.use(authMiddleware);
 
@@ -42,9 +44,11 @@ router.get("/:id", async (req, res) => {
     }
 });
 
-router.post("/", enforceLimit(Economy), async (req, res) => {
+// POST - Crear economía
+router.post("/", authMiddleware, enforceLimit(Economy), async (req, res) => {
+    const i = req.body.name || req.body.world;
     try {
-        const i = req.body.name || req.body.world;
+        await autoPopulateReferences(req.body, req.user.userId);
         const newEconomy = new Economy({
             ...req.body,
             owner: req.user.userId
@@ -56,9 +60,11 @@ router.post("/", enforceLimit(Economy), async (req, res) => {
     }
 });
 
-router.put("/:id", async (req, res) => {
-    const i = req.body.name; 
+// PUT - Actualizar economía
+router.put("/:id", authMiddleware, async (req, res) => {
+    const i = req.body.name || req.body.world;
     try {
+        await autoPopulateReferences(req.body, req.user.userId);
         const updated = await Economy.findOneAndUpdate(
             { _id: req.params.id, owner: req.user.userId },
             req.body,

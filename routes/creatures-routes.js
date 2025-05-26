@@ -3,6 +3,8 @@ const router = express.Router();
 const Creature = require("../models/Creature");
 const authMiddleware = require("../middleware/authMiddleware");
 const enforceLimit = require("../middleware/limitByUserType");
+const autoPopulateReferences = require("../utils/autoPopulateRefs");
+
 
 router.use(authMiddleware);
 
@@ -43,36 +45,43 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", enforceLimit(Creature), async (req, res) => {
-  try {
+// POST - Crear nueva criatura
+router.post("/", authMiddleware, enforceLimit(Creature), async (req, res) => {
     const i = req.body.name || req.body.world;
+  try {
+    const populatedData = await autoPopulateReferences(req.body, req.user.userId);
     const newCreature = new Creature({
-      ...req.body,
+      ...populatedData,
       owner: req.user.userId
     });
     const saved = await newCreature.save();
     res.status(201).json(saved);
   } catch (err) {
-    res.status(400).json({ message: "Error creating creature" });
+    res.status(400).json({ message: "Error creating creature", error: err.message });
   }
 });
 
-router.put("/:id", async (req, res) => {
-  const i = req.body.name; 
+// PUT - Actualizar criatura
+router.put("/:id", authMiddleware, async (req, res) => {
+    const i = req.body.name || req.body.world;
   try {
+    const populatedData = await autoPopulateReferences(req.body, req.user.userId);
+
     const updated = await Creature.findOneAndUpdate(
       { _id: req.params.id, owner: req.user.userId },
-      req.body,
-      { new: true }
+      populatedData,
+      { new: true, runValidators: true }
     );
+
     if (!updated) {
       return res.status(404).json({ message: "Creature not found" });
     }
     res.json(updated);
   } catch (err) {
-    res.status(400).json({ message: "Error updating creature" });
+    res.status(400).json({ message: "Error updating creature", error: err.message });
   }
 });
+
 
 router.delete("/:id", async (req, res) => {
   try {

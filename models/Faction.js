@@ -5,8 +5,8 @@ const factionSchema = new mongoose.Schema({
 
   // Descripción general
   description: { type: String },
-  type: { type: String }, // ej: imperio, gremio, corporación, clan, etc.
-  symbol: { type: String }, // podría usarse como URL a una imagen o descripción
+  type: { type: String },
+  symbol: { type: String },
 
   // Relaciones clave
   members: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
@@ -17,20 +17,30 @@ const factionSchema = new mongoose.Schema({
   associatedItems: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
   associatedStories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
   religion: { type: mongoose.Schema.Types.ObjectId, ref: "Religion" },
-  economySystem: { type: String },
   language: { type: mongoose.Schema.Types.ObjectId, ref: "Language" },
-
-  // Extras
   powerSystem: { type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" },
-  technology: { type: String },
   territory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
+
+  // Raw fields para autocompletar
+  rawMembers: String,
+  rawAllies: String,
+  rawEnemies: String,
+  rawHeadquarters: String,
+  rawInvolvedInEvents: String,
+  rawAssociatedItems: String,
+  rawAssociatedStories: String,
+  rawReligion: String,
+  rawLanguage: String,
+  rawPowerSystem: String,
+  rawTerritory: String,
+
+  economySystem: { type: String },
+  technology: { type: String },
   goals: [String],
   history: { type: String },
 
-  // Texto libre opcional (máx. 250 caracteres)
   customNotes: { type: String, maxlength: 250 },
 
-  // Propiedades necesarias
   world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
 

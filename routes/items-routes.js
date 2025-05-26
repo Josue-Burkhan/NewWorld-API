@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 const Item = require("../models/Item");
 const authMiddleware = require("../middleware/authMiddleware");
 const enforceLimit = require("../middleware/limitByUserType");
+const autoPopulateReferences = require("../utils/autoPopulateRefs");
+
 
 // GET - Todos los items
 router.get("/", async (req, res) => {
@@ -56,8 +58,10 @@ router.get("/:id", async (req, res) => {
 
 // POST - Crear nuevo item
 router.post("/", authMiddleware, enforceLimit(Item), async (req, res) => {
+  const i = req.body.name || req.body.world;
   try {
-    const i = req.body.name || req.body.world;
+    await autoPopulateReferences(req.body, req.user.userId);
+
     const newItem = new Item({
       ...req.body,
       owner: req.user.userId
@@ -71,19 +75,30 @@ router.post("/", authMiddleware, enforceLimit(Item), async (req, res) => {
 });
 
 // PUT - Actualizar item
-router.put("/:id", async (req, res) => {
-  const i = req.body.name; 
+router.put("/:id", authMiddleware, async (req, res) => {
+  const i = req.body.name || req.body.world;
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid item ID" });
     }
 
-    const updatedItem = await Item.findByIdAndUpdate(req.params.id, req.body, {
+    const item = await Item.findById(id);
+    if (!item) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    if (item.owner.toString() !== req.user.userId) {
+      return res.status(403).json({ message: "Forbidden - You do not own this item" });
+    }
+
+    await autoPopulateReferences(req.body, req.user.userId);
+
+    const updatedItem = await Item.findByIdAndUpdate(id, req.body, {
       new: true,
-      runValidators: true,
+      runValidators: true
     });
 
-    if (!updatedItem) return res.status(404).json({ message: "Item not found" });
     res.json(updatedItem);
   } catch (error) {
     res.status(400).json({ message: "Error updating item", error: error.message });

@@ -12,7 +12,7 @@ const characterSchema = new mongoose.Schema({
   world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 
-  // Raza (opcional)
+  // Raza
   race: { type: mongoose.Schema.Types.ObjectId, ref: "Race" },
   rawRace: String,
 
@@ -45,7 +45,6 @@ const characterSchema = new mongoose.Schema({
     ]
   },
 
-  //Si quiere poner algo más: 
   customNotes: { type: String, maxlength: 250 },
 
   // Relaciones con otros personajes
@@ -53,18 +52,18 @@ const characterSchema = new mongoose.Schema({
     family: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
     enemies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
-    romance: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    romance: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }]
   },
 
-  // Vinculaciones con otras entidades del mundo
+  // Vinculaciones con otras entidades
   abilities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
-  rawAbilities: String,
+  rawAbilities: [String],
 
   weapons: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
-  rawWeapons: String,
+  rawWeapons: [String],
 
   faction: { type: mongoose.Schema.Types.ObjectId, ref: "Faction" },
-  rawFactions: String,
+  rawFaction: String,
 
   location: { type: mongoose.Schema.Types.ObjectId, ref: "Location" },
   rawLocation: String,

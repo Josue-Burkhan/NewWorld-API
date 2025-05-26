@@ -3,6 +3,8 @@ const router = express.Router();
 const Story = require("../models/Story");
 const authMiddleware = require("../middleware/authMiddleware");
 const enforceLimit = require("../middleware/limitByUserType");
+const autoPopulateReferences = require("../utils/autoPopulateRefs");
+
 
 router.use(authMiddleware);
 
@@ -54,12 +56,15 @@ router.get("/:id", async (req, res) => {
 });
 
 router.post("/", enforceLimit(Story), async (req, res) => {
+    const i = req.body.title || req.body.world;
     try {
-        const i = req.body.title || req.body.world;
+        await autoPopulateReferences(req.body, req.user.userId);
+
         const newStory = new Story({
             ...req.body,
             owner: req.user.userId
         });
+
         const saved = await newStory.save();
         res.status(201).json(saved);
     } catch (err) {
@@ -68,21 +73,26 @@ router.post("/", enforceLimit(Story), async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
-    const i = req.body.title; 
+    const i = req.body.title || req.body.world;
     try {
+        await autoPopulateReferences(req.body, req.user.userId);
+
         const updated = await Story.findOneAndUpdate(
             { _id: req.params.id, owner: req.user.userId },
             req.body,
             { new: true }
         );
+
         if (!updated) {
             return res.status(404).json({ message: "Story not found" });
         }
+
         res.json(updated);
     } catch (err) {
         res.status(400).json({ message: "Error updating story" });
     }
 });
+
 
 router.delete("/:id", async (req, res) => {
     try {

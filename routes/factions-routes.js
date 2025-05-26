@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 const Faction = require("../models/Faction");
 const authMiddleware = require("../middleware/authMiddleware");
 const enforceLimit = require("../middleware/limitByUserType");
+const autoPopulateReferences = require("../utils/autoPopulateRefs");
+
 
 // GET all factions for the authenticated user
 router.get("/", authMiddleware, async (req, res) => {
@@ -57,8 +59,10 @@ router.get("/:id", authMiddleware, async (req, res) => {
 
 // POST - Create faction
 router.post("/", authMiddleware, enforceLimit(Faction), async (req, res) => {
-  try {
     const i = req.body.name || req.body.world;
+  try {
+    await autoPopulateReferences(req.body, req.user.userId);
+
     const newFaction = new Faction({
       ...req.body,
       owner: req.user.userId
@@ -73,7 +77,7 @@ router.post("/", authMiddleware, enforceLimit(Faction), async (req, res) => {
 
 // PUT - Update faction
 router.put("/:id", authMiddleware, async (req, res) => {
-  const i = req.body.name; 
+    const i = req.body.name || req.body.world;
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -88,6 +92,8 @@ router.put("/:id", authMiddleware, async (req, res) => {
     if (faction.owner.toString() !== req.user.userId) {
       return res.status(403).json({ message: "Forbidden - You do not own this faction" });
     }
+
+    await autoPopulateReferences(req.body, req.user.userId);
 
     const updatedFaction = await Faction.findByIdAndUpdate(id, req.body, {
       new: true,
