@@ -7,6 +7,8 @@ const User = require("../models/user-model");
 const {
   canCreateWorld
 } = require("../services/userServices");
+const worldTemplates = require('../utils/worldTemplates');
+
 
 const jwt = require("jsonwebtoken");
 const authenticateToken = (req, res, next) => {
@@ -36,7 +38,7 @@ const upload = multer({ storage });
 // POST /api/worlds → Crear nuevo mundo
 router.post("/", authenticateToken, upload.single("image"), async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, template } = req.body;
     const user = await User.findById(req.user.userId);
     const currentWorldCount = await World.countDocuments({ owner: user._id });
 
@@ -44,11 +46,14 @@ router.post("/", authenticateToken, upload.single("image"), async (req, res) => 
       return res.status(403).json({ error: "You cannot create more worlds with your current plan." });
     }
 
+    const modules = worldTemplates[template] || {};
+
     const newWorld = new World({
       name,
       description,
       owner: user._id,
-      image: req.file ? `/uploads/${req.file.filename}` : undefined
+      image: req.file ? `/uploads/${req.file.filename}` : undefined,
+      modules
     });
 
     await newWorld.save();
@@ -57,6 +62,7 @@ router.post("/", authenticateToken, upload.single("image"), async (req, res) => 
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 // GET /api/worlds → Obtener todos los mundos del usuario
 router.get("/", authenticateToken, async (req, res) => {

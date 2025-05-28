@@ -150,6 +150,9 @@
                 },
                 "description": {
                   "example": "any"
+                },
+                "template": {
+                  "example": "any"
                 }
               }
             }
