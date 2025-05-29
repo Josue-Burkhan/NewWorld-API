@@ -27,6 +27,7 @@ const raceRoutes = require("./routes/races-routes.js");
 const economyRoutes = require("./routes/economies-routes.js");
 
 const authRoutes = require("./routes/auth-routes");
+const paypalRoutes = require("./routes/paypal.js")
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -123,6 +124,7 @@ app.use("/api/newworld/races", raceRoutes);
 app.use("/api/newworld/economies", economyRoutes);
 
 app.use("/auth", authRoutes);
+app.use("/paypal", paypalRoutes);
 
 //Star the server
 app.listen(PORT, () => {

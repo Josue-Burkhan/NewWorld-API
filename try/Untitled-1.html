@@ -1,0 +1,101 @@
+<!--Premium Mensual boton-->
+<div id="paypal-button-container-P-32X42382VL9732644NA4JZ4Q"></div>
+<script
+  src="https://www.paypal.com/sdk/js?client-id=Af5JWY2pthWV6BfZuBswE0xc50VvvTnX-FQQR5Oid_uqoMQVYMcZt74Kjz8bPO-uV4ggUYF0WuItM2J5&vault=true&intent=subscription"
+  data-sdk-integration-source="button-factory"></script>
+<script>
+  paypal.Buttons({
+    style: {
+      shape: 'rect',
+      color: 'silver',
+      layout: 'horizontal',
+      label: 'subscribe'
+    },
+    createSubscription: function (data, actions) {
+      return actions.subscription.create({
+        /* Creates the subscription */
+        plan_id: 'P-32X42382VL9732644NA4JZ4Q'
+      });
+    },
+    onApprove: function (data, actions) {
+      alert(data.subscriptionID); // You can add optional success message for the subscriber here
+    }
+  }).render('#paypal-button-container-P-32X42382VL9732644NA4JZ4Q'); // Renders the PayPal button
+</script>
+
+<!--Premium Anual boton-->
+<div id="paypal-button-container-P-8JW61793056281703NA4N7TI"></div>
+<script
+  src="https://www.paypal.com/sdk/js?client-id=Af5JWY2pthWV6BfZuBswE0xc50VvvTnX-FQQR5Oid_uqoMQVYMcZt74Kjz8bPO-uV4ggUYF0WuItM2J5&vault=true&intent=subscription"
+  data-sdk-integration-source="button-factory"></script>
+<script>
+  paypal.Buttons({
+    style: {
+      shape: 'rect',
+      color: 'silver',
+      layout: 'vertical',
+      label: 'subscribe'
+    },
+    createSubscription: function (data, actions) {
+      return actions.subscription.create({
+        /* Creates the subscription */
+        plan_id: 'P-8JW61793056281703NA4N7TI'
+      });
+    },
+    onApprove: function (data, actions) {
+      alert(data.subscriptionID); // You can add optional success message for the subscriber here
+    }
+  }).render('#paypal-button-container-P-8JW61793056281703NA4N7TI'); // Renders the PayPal button
+</script>
+
+
+<!--Creator of Worlds Mensual boton-->
+<div id="paypal-button-container-P-1TN52958VE886423GNA4OB7I"></div>
+<script
+  src="https://www.paypal.com/sdk/js?client-id=Af5JWY2pthWV6BfZuBswE0xc50VvvTnX-FQQR5Oid_uqoMQVYMcZt74Kjz8bPO-uV4ggUYF0WuItM2J5&vault=true&intent=subscription"
+  data-sdk-integration-source="button-factory"></script>
+<script>
+  paypal.Buttons({
+    style: {
+      shape: 'rect',
+      color: 'gold',
+      layout: 'vertical',
+      label: 'subscribe'
+    },
+    createSubscription: function (data, actions) {
+      return actions.subscription.create({
+        /* Creates the subscription */
+        plan_id: 'P-1TN52958VE886423GNA4OB7I'
+      });
+    },
+    onApprove: function (data, actions) {
+      alert(data.subscriptionID); // You can add optional success message for the subscriber here
+    }
+  }).render('#paypal-button-container-P-1TN52958VE886423GNA4OB7I'); // Renders the PayPal button
+</script>
+
+
+<!--Creator of Worlds Anual boton-->
+<div id="paypal-button-container-P-1BG541325N636574XNA4ODDA"></div>
+<script
+  src="https://www.paypal.com/sdk/js?client-id=Af5JWY2pthWV6BfZuBswE0xc50VvvTnX-FQQR5Oid_uqoMQVYMcZt74Kjz8bPO-uV4ggUYF0WuItM2J5&vault=true&intent=subscription"
+  data-sdk-integration-source="button-factory"></script>
+<script>
+  paypal.Buttons({
+    style: {
+      shape: 'rect',
+      color: 'gold',
+      layout: 'vertical',
+      label: 'subscribe'
+    },
+    createSubscription: function (data, actions) {
+      return actions.subscription.create({
+        /* Creates the subscription */
+        plan_id: 'P-1BG541325N636574XNA4ODDA'
+      });
+    },
+    onApprove: function (data, actions) {
+      alert(data.subscriptionID); // You can add optional success message for the subscriber here
+    }
+  }).render('#paypal-button-container-P-1BG541325N636574XNA4ODDA'); // Renders the PayPal button
+</script>
