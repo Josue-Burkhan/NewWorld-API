@@ -15,12 +15,12 @@ async function canCreateCharacter(userId) {
 
   const characterCount = await Character.countDocuments({ owner: userId });
 
-  switch ((user.accountType || "").toLowerCase()) {
-    case "Free":
+  switch ((user.plan || "").toLowerCase()) {
+    case "free":
       return characterCount < 80;
-    case "Premium":
+    case "premium":
       return characterCount < 505;
-    case "Creator of Worlds":
+    case "creator of worlds":
       return true;
     default:
       return false;
