@@ -94,14 +94,19 @@ router.get("/:id", authMiddleware, async (req, res) => {
 router.post("/", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.userId;
+    const worldId = req.body.world;
 
     const allowed = await canCreateCharacter(userId);
     if (!allowed) {
       return res.status(403).json({ message: "Character creation limit reached for your account type" });
     }
 
+    if (!worldId) {
+        return res.status(400).json({ message: "World ID is required in the request body." });
+    }
+
     // Crear entidades a partir de los raw
-    const enrichedBody = await autoPopulateReferences(req.body, userId);
+    const enrichedBody = await autoPopulateReferences(req.body, userId, worldId);
 
     const formattedCharacter = {
       ...enrichedBody,

@@ -38,16 +38,19 @@ const rawToRefMapping = {
   race: "rawRace"
 };
 
-async function createIfNotExists(modelName, name, userId) {
+async function createIfNotExists(modelName, name, userId, worldId) {
   const Model = models[modelName];
-  const existing = await Model.findOne({ name, owner: userId });
+  if (!Model) return null;
+
+  const existing = await Model.findOne({ name, owner: userId, world: worldId });
   if (existing) return existing._id;
-  const newDoc = new Model({ name, owner: userId });
+
+  const newDoc = new Model({ name, owner: userId, world: worldId });
   await newDoc.save();
   return newDoc._id;
 }
 
-async function autoPopulateRefs(data, userId) {
+async function autoPopulateRefs(data, userId, worldId) {
   const updatedData = { ...data };
 
   for (const [field, modelName] of Object.entries(refFields)) {
@@ -57,9 +60,11 @@ async function autoPopulateRefs(data, userId) {
     if (!data[field] && data[rawField]) {
       const names = data[rawField].split(",").map(n => n.trim()).filter(Boolean);
 
-      const ids = await Promise.all(names.map(name => createIfNotExists(modelName, name, userId)));
+      const ids = await Promise.all(names.map(name => createIfNotExists(modelName, name, userId, worldId)));
 
-      updatedData[field] = isArrayField ? ids : ids[0];
+      const filteredIds = ids.filter(Boolean);
+
+      updatedData[field] = isArrayField ? filteredIds : filteredIds[0];
       delete updatedData[rawField];
     }
   }
