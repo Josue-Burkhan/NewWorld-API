@@ -106,7 +106,7 @@ router.post("/", authMiddleware, async (req, res) => {
     }
 
     // Crear entidades a partir de los raw
-    const enrichedBody = await autoPopulateReferences(req.body, userId, worldId);
+    const enrichedBody = await autoPopulateReferences(req.body, userId);
 
     const formattedCharacter = {
       ...enrichedBody,
@@ -137,6 +137,7 @@ router.post("/", authMiddleware, async (req, res) => {
     await newCharacter.save();
     res.status(201).json(newCharacter);
   } catch (error) {
+    console.error("Error creating character:", error);
     res.status(500).json({ message: "Error creating character", error: error.message });
   }
 });
