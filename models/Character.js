@@ -57,10 +57,10 @@ const characterSchema = new mongoose.Schema({
 
   // Vinculaciones con otras entidades
   abilities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
-  rawAbilities: [String],
+  rawAbilities: String,
 
   weapons: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
-  rawWeapons: [String],
+  rawWeapons: String,
 
   faction: { type: mongoose.Schema.Types.ObjectId, ref: "Faction" },
   rawFaction: String,
