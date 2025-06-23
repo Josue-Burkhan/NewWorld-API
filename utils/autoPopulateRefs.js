@@ -42,7 +42,8 @@ async function autoPopulateReferences(body, ownerId) {
     const fieldMappings = [
         // Campos de Character
         { ref: 'abilities',   raw: 'rawAbilities',   model: 'Ability',     isArray: true },
-        { ref: 'items',        raw: 'rawItems',       model: 'Item',        isArray: true },
+        { ref: 'items',       raw: 'rawItems',       model: 'Item',        isArray: true },
+        { ref: 'languages',   raw: 'rawLanguages',   model: 'Language',    isArray: true },
         { ref: 'race',        raw: 'rawRace',        model: 'Race',        isArray: false },
         { ref: 'faction',     raw: 'rawFaction',     model: 'Faction',     isArray: false },
         { ref: 'location',    raw: 'rawLocation',    model: 'Location',    isArray: false },

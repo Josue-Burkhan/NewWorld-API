@@ -65,6 +65,9 @@ const characterSchema = new mongoose.Schema({
   faction: { type: mongoose.Schema.Types.ObjectId, ref: "Faction" },
   rawFaction: String,
 
+  languages: { type: mongoose.Schema.Types.ObjectId, ref: "Language" },
+  rawLanguages: [String],
+
   location: { type: mongoose.Schema.Types.ObjectId, ref: "Location" },
   rawLocation: String,
 
