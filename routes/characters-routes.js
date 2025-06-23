@@ -96,21 +96,34 @@ router.post("/", authMiddleware, async (req, res) => {
     const userId = req.user.userId;
 
     // Validaciones iniciales
+    if (!req.body.world) {
+      return res.status(400).json({ message: "World ID is required." });
+    }
     const allowed = await canCreateCharacter(userId);
     if (!allowed) {
-      return res.status(403).json({ message: "Character creation limit reached for your account type" });
-    }
-    if (!req.body.world) {
-      return res.status(400).json({ message: "World ID is required in the request body." });
+      return res.status(403).json({ message: "Character creation limit reached." });
     }
 
-    const enrichedBody = await autoPopulateReferences(req.body, userId);
-
+    // --- PASO 1: CREAR TODO ---
+    const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, userId);
     enrichedBody.owner = userId;
 
     const newCharacter = new Character(enrichedBody);
-
     await newCharacter.save();
+
+    // --- PASO 2: VINCULAR DE VUELTA ---
+    if (newlyCreated.length > 0) {
+      const backReferenceField = 'characters';
+
+      await Promise.all(newlyCreated.map(item => {
+        const Model = mongoose.model(item.model);
+        
+        return Model.findByIdAndUpdate(item.id, {
+          $push: { [backReferenceField]: newCharacter._id }
+        });
+      }));
+    }
+
     res.status(201).json(newCharacter);
 
   } catch (error) {

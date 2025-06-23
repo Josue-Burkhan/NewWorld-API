@@ -2,7 +2,6 @@
 
 const mongoose = require('mongoose');
 
-// 1. Importa TODOS los modelos que podrías necesitar referenciar
 const models = {
     Ability: require("../models/Ability"),
     Item: require("../models/Item"),
@@ -14,33 +13,44 @@ const models = {
     Economy: require("../models/Economy"),
     Story: require("../models/Story"),
     Race: require("../models/Race"),
-    Character: require("../models/Character"), // Se añade Character para referencias como 'createdBy'
-    Event: require("../models/Event"),         // Se añade Event
+    Character: require("../models/Character"),
+    Event: require("../models/Event"),
+    Language: require("../models/Language"), // Añadido Language que estaba en tu lista
 };
 
-// ... (la función findOrCreate no necesita cambios) ...
+/**
+ * CAMBIO: Ahora devuelve un objeto {id, isNew} para saber si el documento se acaba de crear.
+ */
 async function findOrCreate(modelName, name, worldId, ownerId) {
     const Model = models[modelName];
     if (!name || !Model) return null;
+
     const existingDoc = await Model.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') }, world: worldId });
-    if (existingDoc) return existingDoc._id;
+    if (existingDoc) {
+        // Devuelve el ID y una bandera 'isNew: false'
+        return { id: existingDoc._id, isNew: false };
+    }
+
     const newDoc = new Model({ name: name.trim(), world: worldId, owner: ownerId });
     await newDoc.save();
-    return newDoc._id;
+    // Devuelve el ID y una bandera 'isNew: true'
+    return { id: newDoc._id, isNew: true };
 }
 
-
+/**
+ * CAMBIO: Ahora devuelve el body enriquecido Y una lista de las entidades que se acaban de crear.
+ */
 async function autoPopulateReferences(body, ownerId) {
     const enrichedBody = { ...body };
     const worldId = body.world; 
-    
+    const newlyCreated = [];
+
     if (!worldId) {
         throw new Error("Cannot auto-populate references without a worldId in the request body.");
     }
 
-    // 2. LISTA DE INSTRUCCIONES UNIVERSAL
+    // Usamos tu lista de mapeo, que es la más completa y correcta.
     const fieldMappings = [
-        // Campos de Character
         { ref: 'abilities',   raw: 'rawAbilities',   model: 'Ability',     isArray: true },
         { ref: 'items',       raw: 'rawItems',       model: 'Item',        isArray: true },
         { ref: 'languages',   raw: 'rawLanguages',   model: 'Language',    isArray: true },
@@ -52,41 +62,48 @@ async function autoPopulateReferences(body, ownerId) {
         { ref: 'creature',    raw: 'rawCreature',    model: 'Creature',    isArray: false },
         { ref: 'economy',     raw: 'rawEconomy',     model: 'Economy',     isArray: false },
         { ref: 'story',       raw: 'rawStory',       model: 'Story',       isArray: false },
-        
-        // Campos de Item (y otros modelos)
+
+
         { ref: 'createdBy',           raw: 'rawCreatedBy',           model: 'Character',   isArray: false },
         { ref: 'usedBy',              raw: 'rawUsedBy',              model: 'Character',   isArray: true },
         { ref: 'associatedFactions',  raw: 'rawAssociatedFactions',  model: 'Faction',     isArray: true },
         { ref: 'associatedEvents',    raw: 'rawAssociatedEvents',    model: 'Event',       isArray: true },
         { ref: 'associatedStories',   raw: 'rawAssociatedStories',   model: 'Story',       isArray: true },
         { ref: 'foundInLocations',    raw: 'rawFoundInLocations',    model: 'Location',    isArray: true },
-        // ...puedes seguir añadiendo más reglas aquí para otros modelos...
     ];
 
     await Promise.all(fieldMappings.map(async (mapping) => {
         const rawValue = enrichedBody[mapping.raw];
-        
         if (rawValue) {
             if (mapping.isArray) {
-                // Si es un array (como rawAbilities o rawUsedBy)
                 const names = Array.isArray(rawValue) ? rawValue : [rawValue];
-                const ids = await Promise.all(
+                const results = await Promise.all(
                     names.map(name => findOrCreate(mapping.model, name.trim(), worldId, ownerId))
                 );
-                enrichedBody[mapping.ref] = ids.filter(id => id);
+                
+                results.forEach(result => {
+                    if (result && result.isNew) {
+                        // Si es nuevo, lo añade a la lista para vincular de vuelta
+                        newlyCreated.push({ model: mapping.model, id: result.id });
+                    }
+                });
+                enrichedBody[mapping.ref] = results.map(r => r.id).filter(id => id);
+
             } else {
-                // Si es un solo valor (como rawFaction o rawCreatedBy)
-                const id = await findOrCreate(mapping.model, rawValue, worldId, ownerId);
-                if (id) {
-                    enrichedBody[mapping.ref] = id;
+                const result = await findOrCreate(mapping.model, rawValue, worldId, ownerId);
+                if (result) {
+                    if (result.isNew) {
+                        newlyCreated.push({ model: mapping.model, id: result.id });
+                    }
+                    enrichedBody[mapping.ref] = result.id;
                 }
             }
             delete enrichedBody[mapping.raw];
         }
     }));
 
-    return enrichedBody;
+    // Devuelve ambos: el cuerpo listo para guardar, y la lista de IDs a actualizar.
+    return { enrichedBody, newlyCreated };
 }
 
 module.exports = autoPopulateReferences;
-

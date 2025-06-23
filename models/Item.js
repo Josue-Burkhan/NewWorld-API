@@ -13,7 +13,7 @@ const itemSchema = new mongoose.Schema({
   rarity: { type: String },
 
   // Relacionado con el mundo y su historia
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Character" },
+  characters: { type: mongoose.Schema.Types.ObjectId, ref: "Character" },
   usedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
   associatedFactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
   associatedEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],

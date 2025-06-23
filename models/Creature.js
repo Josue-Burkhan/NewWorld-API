@@ -11,7 +11,7 @@ const creatureSchema = new mongoose.Schema({
     domesticated: { type: Boolean, default: false },
 
     // Relaciones
-    encounteredBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
     associatedFactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
     linkedEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
     appearsInStories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
