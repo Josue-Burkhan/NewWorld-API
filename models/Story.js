@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const storySchema = new mongoose.Schema({
-  title: { type: String, required: true },
+  name: { type: String, required: true },
   summary: { type: String, maxlength: 1000 },
 
   // Línea de tiempo de eventos clave

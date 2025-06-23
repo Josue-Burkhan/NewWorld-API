@@ -56,7 +56,7 @@ router.get("/:id", async (req, res) => {
 });
 
 router.post("/", enforceLimit(Story), async (req, res) => {
-    const i = req.body.title || req.body.world;
+    const i = req.body.name || req.body.world;
     try {
         await autoPopulateReferences(req.body, req.user.userId);
 
@@ -73,7 +73,7 @@ router.post("/", enforceLimit(Story), async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
-    const i = req.body.title || req.body.world;
+    const i = req.body.name || req.body.world;
     try {
         await autoPopulateReferences(req.body, req.user.userId);
 
