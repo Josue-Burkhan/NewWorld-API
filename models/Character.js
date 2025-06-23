@@ -59,8 +59,8 @@ const characterSchema = new mongoose.Schema({
   abilities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
   rawAbilities: [String],
 
-  weapons: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
-  rawWeapons: [String],
+  items: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
+  rawItems: [String],
 
   faction: { type: mongoose.Schema.Types.ObjectId, ref: "Faction" },
   rawFaction: String,
