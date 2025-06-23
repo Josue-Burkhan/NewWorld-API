@@ -94,48 +94,25 @@ router.get("/:id", authMiddleware, async (req, res) => {
 router.post("/", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const worldId = req.body.world;
 
+    // Validaciones iniciales
     const allowed = await canCreateCharacter(userId);
     if (!allowed) {
       return res.status(403).json({ message: "Character creation limit reached for your account type" });
     }
-
-    if (!worldId) {
-        return res.status(400).json({ message: "World ID is required in the request body." });
+    if (!req.body.world) {
+      return res.status(400).json({ message: "World ID is required in the request body." });
     }
 
-    // Crear entidades a partir de los raw
     const enrichedBody = await autoPopulateReferences(req.body, userId);
 
-    const formattedCharacter = {
-      ...enrichedBody,
-      name: enrichedBody.name,
-      age: Number(enrichedBody.age) || 0,
-      appearance: {
-        ...enrichedBody.appearance,
-        height: Number(enrichedBody.appearance?.height) || 0,
-        weight: Number(enrichedBody.appearance?.weight) || 0,
-        eyeColor: enrichedBody.appearance?.eyeColor || "",
-        hairColor: enrichedBody.appearance?.hairColor || "",
-        clothingStyle: enrichedBody.appearance?.clothingStyle || "",
-      },
-      history: {
-        ...enrichedBody.history,
-        birthplace: enrichedBody.history?.birthplace || "",
-        events: (enrichedBody.history?.events || []).map((event) => ({
-          ...event,
-          year: Number(event.year) || 0,
-          description: event.description || "",
-        })),
-      },
-      world: enrichedBody.world,
-      owner: userId,
-    };
+    enrichedBody.owner = userId;
 
-    const newCharacter = new Character(formattedCharacter);
+    const newCharacter = new Character(enrichedBody);
+
     await newCharacter.save();
     res.status(201).json(newCharacter);
+
   } catch (error) {
     console.error("Error creating character:", error);
     res.status(500).json({ message: "Error creating character", error: error.message });
