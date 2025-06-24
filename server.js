@@ -10,6 +10,7 @@ const passport = require("passport");
 require("./auth/passport");
 const userRoutes = require("./routes/user-routes.js");
 const worldRoutes = require("./routes/worlds");
+const searchRoutes = require("./routes/searchRoutes.js");
 
 const abilityRoutes = require("./routes/abilities-routes.js");
 const characterRoutes = require("./routes/characters-routes.js");
@@ -108,6 +109,8 @@ app.use(
 
 app.use("/api/account", userRoutes);
 app.use("/api/worlds", worldRoutes);
+app.use("/api/search", searchRoutes);
+
 app.use("/api/newworld/abilities", abilityRoutes);
 app.use("/api/newworld/characters", characterRoutes);
 app.use("/api/newworld/items", itemRoutes);
