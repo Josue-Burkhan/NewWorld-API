@@ -94,8 +94,20 @@ router.get("/:id", authMiddleware, async (req, res) => {
 router.post("/", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.userId;
+    const { name, world } = req.body;
 
-    // Validaciones iniciales
+    const existingCharacter = await Character.findOne({
+      name: { $regex: new RegExp(`^${name}$`, 'i') }, // Búsqueda insensible a mayúsculas
+      world: world
+    });
+
+    if (existingCharacter) {
+      // Devuelve un error 409 Conflict si ya existe.
+      return res.status(409).json({ message: `Un personaje llamado "${name}" ya existe en este mundo.` });
+    }
+
+
+    // Validaciones secundarias
     if (!req.body.world) {
       return res.status(400).json({ message: "World ID is required." });
     }
@@ -117,7 +129,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
       await Promise.all(newlyCreated.map(item => {
         const Model = mongoose.model(item.model);
-        
+
         return Model.findByIdAndUpdate(item.id, {
           $push: { [backReferenceField]: newCharacter._id }
         });

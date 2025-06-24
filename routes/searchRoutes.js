@@ -3,11 +3,20 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
+const Ability = require('../models/Ability');
+const Character = require('../models/Character');
+const Language = require('../models/Language');
 
 // Importa TODOS los modelos que quieres que sean buscables
 const models = {
+    Ability: require("../models/Ability"),
+    Character: require("../models/Character"),
+    Event: require("../models/Event"),
     Race: require("../models/Race"),
     Faction: require("../models/Faction"),
+    Item: require("../models/Item"),
+    Language: require("../models/Language"),
+    Technology: require("../models/Technology"),
     Religion: require("../models/Religion"),
     PowerSystem: require("../models/PowerSystem"),
     Creature: require("../models/Creature"),
