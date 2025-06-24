@@ -41,7 +41,6 @@ router.get('/:category', authMiddleware, async (req, res) => {
     try {
         const results = await Model.find({
             world: worldId,
-            owner: req.user.userId,
             name: { $regex: q, $options: 'i' }
         }).limit(10).select('name');
 
