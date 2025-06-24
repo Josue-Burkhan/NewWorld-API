@@ -13,8 +13,8 @@ const religionSchema = new mongoose.Schema({
     symbols: [String],
 
     // Relaciones
-    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
-    rawFollowers: [String],
+    characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    rawCharacters: [String],
 
     associatedFactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
     rawAssociatedFactions: [String],

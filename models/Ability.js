@@ -1,48 +1,49 @@
+// 📁 /models/Ability.js
+
 const mongoose = require("mongoose");
 
 const abilitySchema = new mongoose.Schema({
-  name: { type: String, required: true },
+    name: { type: String, required: true },
+    description: String,
+    type: String,
+    element: String,
+    cooldown: String,
+    cost: String,
+    level: String,
+    requirements: String,
+    effect: String,
+    customNotes: { type: String, maxlength: 250 },
+    world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 
-  description: String,
-  type: String,
-  element: String,
-  cooldown: String,
-  cost: String,
-  level: String,
-  requirements: String,
-  effect: String,
+    // --- VINCULACIONES 
+    characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    rawCharacters: [String],
 
-  customNotes: { type: String, maxlength: 250 },
+    powerSystems: [{ type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" }],
+    rawPowerSystems: [String],
 
-  // Relaciones principales
-  characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    stories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
+    rawStories: [String],
 
-  powerSystem: { type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" },
-  rawPowerSystem: String,
+    events: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+    rawEvents: [String],
 
-  story: { type: mongoose.Schema.Types.ObjectId, ref: "Story" },
-  rawStory: String,
+    items: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
+    rawItems: [String],
 
-  events: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
-  rawEvents: [String],
+    technologies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Technology" }],
+    rawTechnologies: [String],
 
-  items: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
-  rawItems: [String],
+    creatures: [{ type: mongoose.Schema.Types.ObjectId, ref: "Creature" }],
+    rawCreatures: [String],
 
-  technology: { type: mongoose.Schema.Types.ObjectId, ref: "Technology" },
-  rawTechnology: String,
+    religions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Religion" }],
+    rawReligions: [String],
 
-  creatures: [{ type: mongoose.Schema.Types.ObjectId, ref: "Creature" }],
-  rawCreatures: [String],
+    races: [{ type: mongoose.Schema.Types.ObjectId, ref: "Race" }],
+    rawRaces: [String],
 
-  religion: { type: mongoose.Schema.Types.ObjectId, ref: "Religion" },
-  rawReligion: String,
-
-  race: { type: mongoose.Schema.Types.ObjectId, ref: "Race" },
-  rawRace: String,
-
-  world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
 }, { collection: "newworld.ability", timestamps: true });
 
 module.exports = mongoose.model("Ability", abilitySchema);

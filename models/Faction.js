@@ -9,7 +9,7 @@ const factionSchema = new mongoose.Schema({
   symbol: { type: String },
 
   // Relaciones clave
-  members: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+  characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
   allies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
   enemies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
   headquarters: { type: mongoose.Schema.Types.ObjectId, ref: "Location" },

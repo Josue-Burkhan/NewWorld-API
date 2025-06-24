@@ -1,207 +1,172 @@
+// 📁 /routes/characters-routes.js
+
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
-const jwt = require("jsonwebtoken");
 const Character = require("../models/Character");
 const User = require("../models/user-model");
 const authMiddleware = require("../middleware/authMiddleware");
 const autoPopulateReferences = require("../utils/autoPopulateRefs");
 
+// --- MODELOS PARA LIMPIEZA DE REFERENCIAS ---
+// Importa todos los modelos que podrían tener una referencia a un 'Character'
+const Ability = require('../models/Ability');
+const Item = require('../models/Item');
+// Añade aquí cualquier otro modelo que tenga campos como 'usedBy', 'createdBy', etc.
 
-// Utility function to check user character limits
+// --- UTILITY ---
 async function canCreateCharacter(userId) {
-  const user = await User.findById(userId);
-  if (!user) throw new Error("User not found");
-
-  const characterCount = await Character.countDocuments({ owner: userId });
-
-  switch ((user.plan || "").toLowerCase()) {
-    case "free":
-      return characterCount < 80;
-    case "premium":
-      return characterCount < 505;
-    case "creator of worlds":
-      return true;
-    default:
-      return false;
-  }
+    const user = await User.findById(userId);
+    if (!user) throw new Error("User not found");
+    const characterCount = await Character.countDocuments({ owner: userId });
+    switch ((user.plan || "").toLowerCase()) {
+        case "free": return characterCount < 80;
+        case "premium": return characterCount < 505;
+        case "creator of worlds": return true;
+        default: return false;
+    }
 }
 
-// GET all characters for the authenticated user
+// --- POPULATE HELPER ---
+const populationPaths = [
+    { path: 'abilities', select: 'name' }, { path: 'items', select: 'name' },
+    { path: 'languages', select: 'name' }, { path: 'races', select: 'name' },
+    { path: 'factions', select: 'name' }, { path: 'locations', select: 'name' },
+    { path: 'powerSystems', select: 'name' }, { path: 'religions', select: 'name' },
+    { path: 'creatures', select: 'name' }, { path: 'economies', select: 'name' },
+    { path: 'stories', select: 'name' },
+    { path: 'relationships.family', select: 'name' }, { path: 'relationships.friends', select: 'name' },
+    { path: 'relationships.enemies', select: 'name' }, { path: 'relationships.romance', select: 'name' }
+];
+
+// --- ROUTES ---
+
+// GET / : Obtiene todos los personajes con paginación
 router.get("/", authMiddleware, async (req, res) => {
-  try {
-    const characters = await Character.find({ owner: req.user.userId })
-      .populate({ path: "abilities", select: "_id name" })
-      .populate({ path: "weapons", select: "_id name" })
-      .populate({ path: "faction", select: "_id name" })
-      .populate({ path: "location", select: "_id name" })
-      .populate({ path: "powerSystem", select: "_id name" })
-      .populate({ path: "religion", select: "_id name" })
-      .populate({ path: "creature", select: "_id name" })
-      .populate({ path: "economy", select: "_id name" })
-      .populate({ path: "story", select: "_id title" })
-      .populate({ path: "race", select: "_id name" })
-      .populate({ path: "relationships.family", select: "_id name" })
-      .populate({ path: "relationships.friends", select: "_id name" })
-      .populate({ path: "relationships.enemies", select: "_id name" })
-      .populate({ path: "relationships.romance", select: "_id name" });
-
-    res.json(characters);
-  } catch (error) {
-    console.error("Error retrieving characters:", error);
-    if (!req.user || !req.user.userId) {
-      return res.status(400).json({ message: "Bad Request - Missing user ID" });
-    }
-    res.status(500).json({ message: "Error retrieving characters", error: error.message });
-  }
-});
-
-// GET a single character by ID
-router.get("/:id", authMiddleware, async (req, res) => {
-  try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ message: "Invalid character ID" });
-    }
-
-    const character = await Character.findOne({ _id: req.params.id })
-      .populate({ path: "abilities", select: "_id name" })
-      .populate({ path: "weapons", select: "_id name" })
-      .populate({ path: "faction", select: "_id name" })
-      .populate({ path: "location", select: "_id name" })
-      .populate({ path: "powerSystem", select: "_id name" })
-      .populate({ path: "religion", select: "_id name" })
-      .populate({ path: "creature", select: "_id name" })
-      .populate({ path: "economy", select: "_id name" })
-      .populate({ path: "story", select: "_id title" })
-      .populate({ path: "race", select: "_id name" })
-      .populate({ path: "relationships.family", select: "_id name" })
-      .populate({ path: "relationships.friends", select: "_id name" })
-      .populate({ path: "relationships.enemies", select: "_id name" })
-      .populate({ path: "relationships.romance", select: "_id name" });
-
-    if (!character) {
-      return res.status(404).json({ message: "Character not found" });
-    }
-
-    res.json(character);
-  } catch (error) {
-    console.error("Error retrieving character:", error.message);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-});
-
-// POST
-router.post("/", authMiddleware, async (req, res) => {
-  try {
-    const userId = req.user.userId;
-    const { name, world } = req.body;
-
-    const existingCharacter = await Character.findOne({
-      name: { $regex: new RegExp(`^${name}$`, 'i') }, // Búsqueda insensible a mayúsculas
-      world: world
-    });
-
-    if (existingCharacter) {
-      // Devuelve un error 409 Conflict si ya existe.
-      return res.status(409).json({ message: `Un personaje llamado "${name}" ya existe en este mundo.` });
-    }
-
-
-    // Validaciones secundarias
-    if (!req.body.world) {
-      return res.status(400).json({ message: "World ID is required." });
-    }
-    const allowed = await canCreateCharacter(userId);
-    if (!allowed) {
-      return res.status(403).json({ message: "Character creation limit reached." });
-    }
-
-    // --- PASO 1: CREAR TODO ---
-    const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, userId);
-    enrichedBody.owner = userId;
-
-    const newCharacter = new Character(enrichedBody);
-    await newCharacter.save();
-
-    // --- PASO 2: VINCULAR DE VUELTA ---
-    if (newlyCreated.length > 0) {
-      const backReferenceField = 'characters';
-
-      await Promise.all(newlyCreated.map(item => {
-        const Model = mongoose.model(item.model);
-
-        return Model.findByIdAndUpdate(item.id, {
-          $push: { [backReferenceField]: newCharacter._id }
+    try {
+        const { page = 1, limit = 10, sort = 'name' } = req.query;
+        const characters = await Character.find({ owner: req.user.userId })
+            .populate(populationPaths)
+            .sort(sort)
+            .limit(limit * 1)
+            .skip((page - 1) * limit)
+            .exec();
+        
+        const count = await Character.countDocuments({ owner: req.user.userId });
+        res.json({
+            characters,
+            totalPages: Math.ceil(count / limit),
+            currentPage: page
         });
-      }));
+    } catch (error) {
+        res.status(500).json({ message: "Error retrieving characters", error: error.message });
     }
-
-    res.status(201).json(newCharacter);
-
-  } catch (error) {
-    console.error("Error creating character:", error);
-    res.status(500).json({ message: "Error creating character", error: error.message });
-  }
 });
 
-// PUT - Update a character by ID
+// GET /:id : Obtiene un solo personaje
+router.get("/:id", authMiddleware, async (req, res) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ message: "Invalid character ID" });
+        }
+        const character = await Character.findOne({ _id: req.params.id, owner: req.user.userId })
+            .populate(populationPaths);
+
+        if (!character) return res.status(404).json({ message: "Character not found or access denied" });
+        res.json(character);
+    } catch (error) {
+        res.status(500).json({ message: "Error retrieving character", error: error.message });
+    }
+});
+
+// POST / : Crea un nuevo personaje
+router.post("/", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { name, world } = req.body;
+        
+        if (!world) return res.status(400).json({ message: "World ID is required." });
+
+        const existingCharacter = await Character.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') }, world });
+        if (existingCharacter) return res.status(409).json({ message: `A character named "${name}" already exists in this world.` });
+        
+        const allowed = await canCreateCharacter(userId);
+        if (!allowed) return res.status(403).json({ message: "Character creation limit reached." });
+
+        const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, userId);
+        enrichedBody.owner = userId;
+
+        const newCharacter = new Character(enrichedBody);
+        await newCharacter.save();
+
+        if (newlyCreated.length > 0) {
+            await Promise.all(newlyCreated.map(item => {
+                const Model = mongoose.model(item.model);
+                return Model.findByIdAndUpdate(item.id, { $push: { characters: newCharacter._id } });
+            }));
+        }
+        
+        res.status(201).json(newCharacter);
+    } catch (error) {
+        res.status(500).json({ message: "Error creating character", error: error.message });
+    }
+});
+
+// PUT /:id : Actualiza un personaje
 router.put("/:id", authMiddleware, async (req, res) => {
-  try {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
+        const character = await Character.findOne({ _id: id, owner: req.user.userId });
+        if (!character) return res.status(404).json({ message: "Character not found or access denied" });
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid character ID" });
+        const { enrichedBody } = await autoPopulateReferences(req.body, req.user.userId);
+        
+        const updatedCharacter = await Character.findByIdAndUpdate(
+            id,
+            { $set: enrichedBody },
+            { new: true, runValidators: true }
+        );
+
+        res.json(updatedCharacter);
+    } catch (error) {
+        res.status(500).json({ message: "Error updating character", error: error.message });
     }
-
-    const character = await Character.findById(id);
-    if (!character) {
-      return res.status(404).json({ message: "Character not found" });
-    }
-
-    if (character.owner.toString() !== req.user.userId) {
-      return res.status(403).json({ message: "Forbidden" });
-    }
-
-    // Procesar los raw antes de actualizar
-    const enrichedBody = await autoPopulateReferences(req.body, req.user.userId);
-
-    const updatedCharacter = await Character.findByIdAndUpdate(
-      id,
-      enrichedBody,
-      { new: true, runValidators: true }
-    );
-
-    res.json(updatedCharacter);
-  } catch (error) {
-    res.status(500).json({ message: "Error updating character", error: error.message });
-  }
 });
 
-
-
-// DELETE
+// DELETE /:id : Borra un personaje y limpia TODAS las referencias de forma universal
 router.delete("/:id", authMiddleware, async (req, res) => {
-  try {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
+        const characterToDelete = await Character.findOne({ _id: id, owner: req.user.userId });
+        if (!characterToDelete) {
+            return res.status(404).json({ message: "Character not found or access denied" });
+        }
+        
+        // 1. Define todos los modelos y los campos que podrían referenciar a un personaje
+        const modelsAndFieldsToClean = [
+            { model: Character, fields: ['relationships.family', 'relationships.friends', 'relationships.enemies', 'relationships.romance'] },
+            { model: Ability, fields: ['characters'] },
+            { model: Item, fields: ['characters'] }
+        ];
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid character ID" });
+        // 2. Ejecuta la limpieza en paralelo
+        await Promise.all(
+            modelsAndFieldsToClean.flatMap(item => 
+                item.fields.map(field => 
+                    item.model.updateMany(
+                        { [field]: id },
+                        { $pull: { [field]: id } }
+                    )
+                )
+            )
+        );
+
+        await Character.findByIdAndDelete(id);
+        
+        res.json({ message: "Character deleted successfully and all references have been cleaned." });
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting character", error: error.message });
     }
-
-    const character = await Character.findById(id);
-    if (!character) {
-      return res.status(404).json({ message: "Character not found" });
-    }
-
-    if (character.owner.toString() !== req.user.userId) {
-      return res.status(403).json({ message: "Forbidden - You do not have permission to delete this character" });
-    }
-
-    await Character.findByIdAndDelete(id);
-    res.json({ message: "Character deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Error deleting character", error: error.message });
-  }
 });
 
 module.exports = router;

@@ -10,8 +10,8 @@ const powerSystemSchema = new mongoose.Schema({
   classificationTypes: [String],
   symbolsOrMarks: { type: String },
 
-  usedByCharacters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
-  rawUsedByCharacters: [String],
+  characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+  rawCharacters: [String],
 
   relatedAbilities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
   rawRelatedAbilities: [String],

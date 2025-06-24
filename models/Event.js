@@ -6,7 +6,7 @@ const eventSchema = new mongoose.Schema({
   description: { type: String },
 
   // Enlaces con otras entidades
-  charactersInvolved: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+  characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
   factionsInvolved: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
   locations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
   itemsUsed: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
@@ -17,7 +17,7 @@ const eventSchema = new mongoose.Schema({
   religion: { type: mongoose.Schema.Types.ObjectId, ref: "Religion" },
 
   // Raw fields para autocompletar si no existe
-  rawCharactersInvolved: String,
+  rawCharacters: String,
   rawFactionsInvolved: String,
   rawLocations: String,
   rawItemsUsed: String,

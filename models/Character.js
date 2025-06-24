@@ -1,90 +1,85 @@
+// 📁 /models/Character.js
+
 const mongoose = require("mongoose");
 
 const characterSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+    name: { type: String, required: true },
+    age: Number,
+    gender: String,
+    nickname: String,
+    world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 
-  // Datos generales
-  age: Number,
-  gender: String,
-  nickname: String,
+    appearance: {
+        height: Number,
+        weight: Number,
+        eyeColor: String,
+        hairColor: String,
+        clothingStyle: String,
+    },
 
-  // Relación con el mundo
-  world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    personality: {
+        traits: [String],
+        strengths: [String],
+        weaknesses: [String],
+    },
 
-  // Raza
-  race: { type: mongoose.Schema.Types.ObjectId, ref: "Race" },
-  rawRace: String,
+    history: {
+        birthplace: String,
+        events: [{
+            year: Number,
+            description: String,
+            _id: false
+        }]
+    },
 
-  // Apariencia física
-  appearance: {
-    height: Number,
-    weight: Number,
-    eyeColor: String,
-    hairColor: String,
-    clothingStyle: String,
-  },
+    customNotes: { type: String, maxlength: 250 },
 
-  // Personalidad
-  personality: {
-    traits: [String],
-    strengths: [String],
-    weaknesses: [String],
-    quirks: [String],
-  },
+    // --- RELACIONES (AHORA CON RAW) ---
+    relationships: {
+        family: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+        rawFamily: [String],
+        friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+        rawFriends: [String],
+        enemies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+        rawEnemies: [String],
+        romance: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+        rawRomance: [String],
+    },
 
-  // Historia
-  history: {
-    birthplace: String,
-    events: [
-      {
-        year: Number,
-        description: String,
-        _id: false
-      }
-    ]
-  },
+    // --- VINCULACIONES (TODAS EN PLURAL Y COMO ARRAYS) ---
+    abilities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
+    rawAbilities: [String],
 
-  customNotes: { type: String, maxlength: 250 },
+    items: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
+    rawItems: [String],
 
-  // Relaciones con otros personajes
-  relationships: {
-    family: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
-    friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
-    enemies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
-    romance: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }]
-  },
+    languages: [{ type: mongoose.Schema.Types.ObjectId, ref: "Language" }],
+    rawLanguages: [String],
 
-  // Vinculaciones con otras entidades
-  abilities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
-  rawAbilities: [String],
+    races: [{ type: mongoose.Schema.Types.ObjectId, ref: "Race" }],
+    rawRaces: [String],
 
-  items: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
-  rawItems: [String],
+    factions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
+    rawFactions: [String],
 
-  faction: { type: mongoose.Schema.Types.ObjectId, ref: "Faction" },
-  rawFaction: String,
+    locations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
+    rawLocations: [String],
 
-  languages: [{ type: mongoose.Schema.Types.ObjectId, ref: "Language" }],
-  rawLanguages: [String],
+    powerSystems: [{ type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" }],
+    rawPowerSystems: [String],
 
-  location: { type: mongoose.Schema.Types.ObjectId, ref: "Location" },
-  rawLocation: String,
+    religions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Religion" }],
+    rawReligions: [String],
 
-  powerSystem: { type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" },
-  rawPowerSystem: String,
+    creatures: [{ type: mongoose.Schema.Types.ObjectId, ref: "Creature" }],
+    rawCreatures: [String],
 
-  religion: { type: mongoose.Schema.Types.ObjectId, ref: "Religion" },
-  rawReligion: String,
+    economies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Economy" }],
+    rawEconomies: [String],
 
-  creature: { type: mongoose.Schema.Types.ObjectId, ref: "Creature" },
-  rawCreature: String,
-
-  economy: { type: mongoose.Schema.Types.ObjectId, ref: "Economy" },
-  rawEconomy: String,
-
-  story: { type: mongoose.Schema.Types.ObjectId, ref: "Story" },
-  rawStory: String
+    stories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
+    rawStories: [String],
 
 }, { collection: "newworld.character", timestamps: true });
 

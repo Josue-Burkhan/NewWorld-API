@@ -51,25 +51,19 @@ async function autoPopulateReferences(body, ownerId) {
 
     // Usamos tu lista de mapeo, que es la más completa y correcta.
     const fieldMappings = [
+        { ref: 'characters',  raw: 'rawCharacters',  model: 'Character',   isArray: true },
         { ref: 'abilities',   raw: 'rawAbilities',   model: 'Ability',     isArray: true },
         { ref: 'items',       raw: 'rawItems',       model: 'Item',        isArray: true },
         { ref: 'languages',   raw: 'rawLanguages',   model: 'Language',    isArray: true },
-        { ref: 'race',        raw: 'rawRace',        model: 'Race',        isArray: false },
-        { ref: 'faction',     raw: 'rawFaction',     model: 'Faction',     isArray: false },
-        { ref: 'location',    raw: 'rawLocation',    model: 'Location',    isArray: false },
-        { ref: 'powerSystem', raw: 'rawPowerSystem', model: 'PowerSystem', isArray: false },
-        { ref: 'religion',    raw: 'rawReligion',    model: 'Religion',    isArray: false },
-        { ref: 'creature',    raw: 'rawCreature',    model: 'Creature',    isArray: false },
-        { ref: 'economy',     raw: 'rawEconomy',     model: 'Economy',     isArray: false },
-        { ref: 'story',       raw: 'rawStory',       model: 'Story',       isArray: false },
+        { ref: 'race',        raw: 'rawRace',        model: 'Race',        isArray: true },
+        { ref: 'faction',     raw: 'rawFaction',     model: 'Faction',     isArray: true },
+        { ref: 'location',    raw: 'rawLocation',    model: 'Location',    isArray: true },
+        { ref: 'powerSystem', raw: 'rawPowerSystem', model: 'PowerSystem', isArray: true },
+        { ref: 'religion',    raw: 'rawReligion',    model: 'Religion',    isArray: true },
+        { ref: 'creature',    raw: 'rawCreature',    model: 'Creature',    isArray: true },
+        { ref: 'economy',     raw: 'rawEconomy',     model: 'Economy',     isArray: true },
+        { ref: 'story',       raw: 'rawStory',       model: 'Story',       isArray: true },
 
-
-        { ref: 'createdBy',           raw: 'rawCreatedBy',           model: 'Character',   isArray: false },
-        { ref: 'usedBy',              raw: 'rawUsedBy',              model: 'Character',   isArray: true },
-        { ref: 'associatedFactions',  raw: 'rawAssociatedFactions',  model: 'Faction',     isArray: true },
-        { ref: 'associatedEvents',    raw: 'rawAssociatedEvents',    model: 'Event',       isArray: true },
-        { ref: 'associatedStories',   raw: 'rawAssociatedStories',   model: 'Story',       isArray: true },
-        { ref: 'foundInLocations',    raw: 'rawFoundInLocations',    model: 'Location',    isArray: true },
     ];
 
     await Promise.all(fieldMappings.map(async (mapping) => {

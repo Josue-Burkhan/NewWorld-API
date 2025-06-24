@@ -14,8 +14,8 @@ const technologySchema = new mongoose.Schema({
     limitations: String,
     energySource: String,
 
-    usedByCharacters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
-    rawUsedByCharacters: [String],
+    characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    rawCharacters: [String],
 
     usedByFactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
     rawUsedByFactions: [String],

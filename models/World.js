@@ -24,7 +24,6 @@ const worldSchema = new mongoose.Schema({
     races: { type: Boolean, default: false },
     economy: { type: Boolean, default: false }
   }
-
 });
 
 module.exports = mongoose.model('World', worldSchema);
