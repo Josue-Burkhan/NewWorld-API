@@ -2,6 +2,7 @@
 
 const mongoose = require('mongoose');
 
+// No es necesario cambiar los modelos, están bien.
 const models = {
     Ability: require("../models/Ability"),
     Item: require("../models/Item"),
@@ -15,11 +16,11 @@ const models = {
     Race: require("../models/Race"),
     Character: require("../models/Character"),
     Event: require("../models/Event"),
-    Language: require("../models/Language"), // Añadido Language que estaba en tu lista
+    Language: require("../models/Language"),
 };
 
 /**
- * CAMBIO: Ahora devuelve un objeto {id, isNew} para saber si el documento se acaba de crear.
+ * La función findOrCreate no necesita cambios, está perfecta.
  */
 async function findOrCreate(modelName, name, worldId, ownerId) {
     const Model = models[modelName];
@@ -27,19 +28,15 @@ async function findOrCreate(modelName, name, worldId, ownerId) {
 
     const existingDoc = await Model.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') }, world: worldId });
     if (existingDoc) {
-        // Devuelve el ID y una bandera 'isNew: false'
         return { id: existingDoc._id, isNew: false };
     }
 
     const newDoc = new Model({ name: name.trim(), world: worldId, owner: ownerId });
     await newDoc.save();
-    // Devuelve el ID y una bandera 'isNew: true'
     return { id: newDoc._id, isNew: true };
 }
 
-/**
- * CAMBIO: Ahora devuelve el body enriquecido Y una lista de las entidades que se acaban de crear.
- */
+
 async function autoPopulateReferences(body, ownerId) {
     const enrichedBody = { ...body };
     const worldId = body.world; 
@@ -49,21 +46,26 @@ async function autoPopulateReferences(body, ownerId) {
         throw new Error("Cannot auto-populate references without a worldId in the request body.");
     }
 
-    // Usamos tu lista de mapeo, que es la más completa y correcta.
-    const fieldMappings = [
-        { ref: 'characters',  raw: 'rawCharacters',  model: 'Character',   isArray: true },
-        { ref: 'abilities',   raw: 'rawAbilities',   model: 'Ability',     isArray: true },
-        { ref: 'items',       raw: 'rawItems',       model: 'Item',        isArray: true },
-        { ref: 'languages',   raw: 'rawLanguages',   model: 'Language',    isArray: true },
-        { ref: 'race',        raw: 'rawRace',        model: 'Race',        isArray: true },
-        { ref: 'faction',     raw: 'rawFaction',     model: 'Faction',     isArray: true },
-        { ref: 'location',    raw: 'rawLocation',    model: 'Location',    isArray: true },
-        { ref: 'powerSystem', raw: 'rawPowerSystem', model: 'PowerSystem', isArray: true },
-        { ref: 'religion',    raw: 'rawReligion',    model: 'Religion',    isArray: true },
-        { ref: 'creature',    raw: 'rawCreature',    model: 'Creature',    isArray: true },
-        { ref: 'economy',     raw: 'rawEconomy',     model: 'Economy',     isArray: true },
-        { ref: 'story',       raw: 'rawStory',       model: 'Story',       isArray: true },
+    // *** INICIO DE LA CORRECCIÓN ***
 
+    // 1. Corregimos los `ref` a plural y añadimos los mapeos de relaciones.
+    const fieldMappings = [
+        { ref: 'abilities',      raw: 'rawAbilities',   model: 'Ability',     isArray: true },
+        { ref: 'items',          raw: 'rawItems',       model: 'Item',        isArray: true },
+        { ref: 'languages',      raw: 'rawLanguages',   model: 'Language',    isArray: true },
+        { ref: 'races',          raw: 'rawRace',        model: 'Race',        isArray: true },
+        { ref: 'factions',       raw: 'rawFaction',     model: 'Faction',     isArray: true },
+        { ref: 'locations',      raw: 'rawLocation',    model: 'Location',    isArray: true },
+        { ref: 'powerSystems',   raw: 'rawPowerSystem', model: 'PowerSystem', isArray: true },
+        { ref: 'religions',      raw: 'rawReligion',    model: 'Religion',    isArray: true },
+        { ref: 'creatures',      raw: 'rawCreature',    model: 'Creature',    isArray: true },
+        { ref: 'economies',      raw: 'rawEconomy',     model: 'Economy',     isArray: true },
+        { ref: 'stories',        raw: 'rawStory',       model: 'Story',       isArray: true },
+
+        { ref: 'relationships.family',   raw: 'rawFamily',   model: 'Character', isArray: true },
+        { ref: 'relationships.friends',  raw: 'rawFriends',  model: 'Character', isArray: true },
+        { ref: 'relationships.enemies',  raw: 'rawEnemies',  model: 'Character', isArray: true },
+        { ref: 'relationships.romance',  raw: 'rawRomance',  model: 'Character', isArray: true },
     ];
 
     await Promise.all(fieldMappings.map(async (mapping) => {
@@ -77,13 +79,22 @@ async function autoPopulateReferences(body, ownerId) {
                 
                 results.forEach(result => {
                     if (result && result.isNew) {
-                        // Si es nuevo, lo añade a la lista para vincular de vuelta
                         newlyCreated.push({ model: mapping.model, id: result.id });
                     }
                 });
-                enrichedBody[mapping.ref] = results.map(r => r.id).filter(id => id);
+                
+                const ids = results.map(r => r.id).filter(id => id);
 
-            } else {
+                // 2. Lógica mejorada para manejar campos anidados como 'relationships.family'
+                if (mapping.ref.includes('.')) {
+                    const [parent, child] = mapping.ref.split('.');
+                    if (!enrichedBody[parent]) enrichedBody[parent] = {};
+                    enrichedBody[parent][child] = ids;
+                } else {
+                    enrichedBody[mapping.ref] = ids;
+                }
+
+            } else { // Aunque no lo usas actualmente para 'character', lo mantenemos por si acaso
                 const result = await findOrCreate(mapping.model, rawValue, worldId, ownerId);
                 if (result) {
                     if (result.isNew) {
@@ -95,8 +106,9 @@ async function autoPopulateReferences(body, ownerId) {
             delete enrichedBody[mapping.raw];
         }
     }));
+    
+    // *** FIN DE LA CORRECCIÓN ***
 
-    // Devuelve ambos: el cuerpo listo para guardar, y la lista de IDs a actualizar.
     return { enrichedBody, newlyCreated };
 }
 
