@@ -11,7 +11,7 @@ const enforceLimit = require("../middleware/limitByUserType");
 // --- MODELOS PARA LIMPIEZA DE REFERENCIAS ---
 const Character = require("../models/Character");
 const Creature = require("../models/Creature");
-// Añade aquí cualquier otro modelo que tenga un campo 'events'
+// ... y otros modelos que tengan un campo 'events'.
 
 // --- POPULATE HELPER ---
 const populationPaths = [
@@ -22,6 +22,42 @@ const populationPaths = [
     { path: 'religions', select: 'name' }
 ];
 
+// --- FUNCIÓN AUXILIAR DE SINCRONIZACIÓN PARA EVENT ---
+async function syncAllReferences(eventId, originalDoc, newDocData) {
+    const fieldsToSync = {
+        characters: 'Character', factions: 'Faction', locations: 'Location',
+        items: 'Item', abilities: 'Ability', stories: 'Story',
+        powerSystems: 'PowerSystem', creatures: 'Creature', religions: 'Religion'
+    };
+    const updatePromises = [];
+    const inverseFieldName = 'events'; // El campo en los otros modelos es 'events'
+
+    for (const fieldPath in fieldsToSync) {
+        const modelName = fieldsToSync[fieldPath];
+        const Model = mongoose.model(modelName);
+
+        const getRefs = (doc) => (doc?.[fieldPath] || []).map(ref => ref.toString());
+
+        const originalRefs = getRefs(originalDoc);
+        const newRefs = getRefs(newDocData);
+
+        const toAdd = newRefs.filter(id => !originalRefs.includes(id));
+        const toRemove = originalRefs.filter(id => !newRefs.includes(id));
+
+        if (toAdd.length > 0) {
+            updatePromises.push(
+                Model.updateMany({ _id: { $in: toAdd } }, { $addToSet: { [inverseFieldName]: eventId } })
+            );
+        }
+        if (toRemove.length > 0) {
+            updatePromises.push(
+                Model.updateMany({ _id: { $in: toRemove } }, { $pull: { [inverseFieldName]: eventId } })
+            );
+        }
+    }
+    await Promise.all(updatePromises);
+}
+
 // --- ROUTES ---
 
 // GET / : Obtiene todos los eventos con paginación
@@ -29,18 +65,9 @@ router.get("/", authMiddleware, async (req, res) => {
     try {
         const { page = 1, limit = 10, sort = 'name' } = req.query;
         const events = await Event.find({ owner: req.user.userId })
-            .populate(populationPaths)
-            .sort(sort)
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
-            .exec();
-
+            .populate(populationPaths).sort(sort).limit(limit * 1).skip((page - 1) * limit).exec();
         const count = await Event.countDocuments({ owner: req.user.userId });
-        res.json({
-            events,
-            totalPages: Math.ceil(count / limit),
-            currentPage: page
-        });
+        res.json({ events, totalPages: Math.ceil(count / limit), currentPage: page });
     } catch (error) {
         res.status(500).json({ message: "Error retrieving events", error: error.message });
     }
@@ -49,8 +76,7 @@ router.get("/", authMiddleware, async (req, res) => {
 // GET /:id : Obtiene un solo evento
 router.get("/:id", authMiddleware, async (req, res) => {
     try {
-        const event = await Event.findOne({ _id: req.params.id, owner: req.user.userId })
-            .populate(populationPaths);
+        const event = await Event.findOne({ _id: req.params.id, owner: req.user.userId }).populate(populationPaths);
         if (!event) return res.status(404).json({ message: "Event not found" });
         res.json(event);
     } catch (error) {
@@ -58,57 +84,46 @@ router.get("/:id", authMiddleware, async (req, res) => {
     }
 });
 
-// POST / : Crea un nuevo evento (con vinculación de vuelta)
+// POST / : Crea un nuevo evento
 router.post("/", authMiddleware, enforceLimit(Event), async (req, res) => {
     try {
         const userId = req.user.userId;
         const { name, world } = req.body;
-
         if (!world) return res.status(400).json({ message: "World ID is required." });
-
         const existingEvent = await Event.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') }, world });
         if (existingEvent) return res.status(409).json({ message: `An event named "${name}" already exists in this world.` });
 
-        const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, userId);
+        const { enrichedBody } = await autoPopulateReferences(req.body, userId);
         enrichedBody.owner = userId;
 
         const newEvent = new Event(enrichedBody);
         await newEvent.save();
 
-        if (newlyCreated.length > 0) {
-            await Promise.all(newlyCreated.map(item => {
-                const Model = mongoose.model(item.model);
-                return Model.findByIdAndUpdate(item.id, { $push: { events: newEvent._id } });
-            }));
-        }
+        await syncAllReferences(newEvent._id, null, newEvent);
 
-        res.status(201).json(newEvent);
+        const populatedEvent = await Event.findById(newEvent._id).populate(populationPaths);
+        res.status(201).json(populatedEvent);
     } catch (error) {
-        res.status(400).json({ message: "Error creating event", error: error.message });
+        console.error("Error creating event:", error);
+        res.status(500).json({ message: "Error creating event", error: error.message });
     }
 });
 
 // PUT /:id : Actualiza un evento
 router.put("/:id", authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params; // ID del evento que se edita
-        const event = await Event.findOne({ _id: id, owner: req.user.userId });
-        if (!event) return res.status(404).json({ message: "Event not found or access denied" });
-
-        // CAMBIO: Capturamos 'newlyCreated'
-        const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, req.user.userId);
-
-        const updatedEvent = await Event.findByIdAndUpdate(id, { $set: enrichedBody }, { new: true, runValidators: true });
-
-        // AÑADIDO: Lógica de vinculación de vuelta
-        if (newlyCreated && newlyCreated.length > 0) {
-            await Promise.all(newlyCreated.map(item => {
-                const Model = mongoose.model(item.model);
-                // Vincula la nueva entidad con este evento
-                return Model.findByIdAndUpdate(item.id, { $push: { events: id } });
-            }));
+        const { id } = req.params;
+        const originalEvent = await Event.findById(id).lean();
+        if (!originalEvent || originalEvent.owner.toString() !== req.user.userId) {
+            return res.status(404).json({ message: "Event not found or access denied" });
         }
 
+        const { enrichedBody } = await autoPopulateReferences(req.body, req.user.userId);
+        await Event.findByIdAndUpdate(id, { $set: enrichedBody });
+
+        await syncAllReferences(id, originalEvent, enrichedBody);
+
+        const updatedEvent = await Event.findById(id).populate(populationPaths);
         res.json(updatedEvent);
     } catch (error) {
         console.error("Error updating event:", error);
@@ -121,18 +136,14 @@ router.delete("/:id", authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const eventToDelete = await Event.findOne({ _id: id, owner: req.user.userId });
-        if (!eventToDelete) return res.status(404).json({ message: "Event not found" });
+        if (!eventToDelete) return res.status(404).json({ message: "Event not found or access denied" });
 
-        const modelsToClean = [Character, Creature]; // Añade aquí otros modelos que tengan un campo 'events'
-        const referenceField = 'events';
-
-        await Promise.all(modelsToClean.map(Model =>
-            Model.updateMany({ [referenceField]: id }, { $pull: { [referenceField]: id } })
-        ));
-
+        await syncAllReferences(id, eventToDelete, null);
         await Event.findByIdAndDelete(id);
+
         res.json({ message: "Event deleted successfully and all references cleaned." });
     } catch (error) {
+        console.error("Error deleting event:", error);
         res.status(500).json({ message: "Error deleting event", error: error.message });
     }
 });

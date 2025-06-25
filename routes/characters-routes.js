@@ -9,10 +9,9 @@ const authMiddleware = require("../middleware/authMiddleware");
 const autoPopulateReferences = require("../utils/autoPopulateRefs");
 
 // --- MODELOS PARA LIMPIEZA DE REFERENCIAS ---
-// Importa todos los modelos que podrían tener una referencia a un 'Character'
 const Ability = require('../models/Ability');
 const Item = require('../models/Item');
-// Añade aquí cualquier otro modelo que tenga campos como 'usedBy', 'createdBy', etc.
+// ... y otros modelos que puedas necesitar.
 
 // --- UTILITY ---
 async function canCreateCharacter(userId) {
@@ -39,6 +38,55 @@ const populationPaths = [
     { path: 'relationships.enemies', select: 'name' }, { path: 'relationships.romance', select: 'name' }
 ];
 
+// --- NUEVA FUNCIÓN AUXILIAR DE SINCRONIZACIÓN ---
+// Centraliza la lógica para vincular y desvincular referencias bidireccionalmente.
+async function syncAllReferences(characterId, originalDoc, newDocData) {
+    const fieldsToSync = {
+        abilities: 'Ability', items: 'Item', languages: 'Language',
+        races: 'Race', factions: 'Faction', locations: 'Location',
+        powerSystems: 'PowerSystem', religions: 'Religion', creatures: 'Creature',
+        economies: 'Economy', stories: 'Story', 'relationships.family': 'Character',
+        'relationships.friends': 'Character', 'relationships.enemies': 'Character',
+        'relationships.romance': 'Character',
+    };
+
+    const updatePromises = [];
+
+    for (const fieldPath in fieldsToSync) {
+        const modelName = fieldsToSync[fieldPath];
+        const Model = mongoose.model(modelName);
+        const [parentField, childField] = fieldPath.includes('.') ? fieldPath.split('.') : [null, fieldPath];
+
+        const getRefs = (doc) => {
+            if (!doc) return [];
+            const target = parentField ? doc[parentField] : doc;
+            return (target?.[childField] || []).map(ref => ref.toString());
+        };
+
+        const originalRefs = getRefs(originalDoc);
+        const newRefs = getRefs(newDocData);
+
+        const toAdd = newRefs.filter(id => !originalRefs.includes(id));
+        const toRemove = originalRefs.filter(id => !newRefs.includes(id));
+
+        const inverseField = parentField === 'relationships' ? childField : 'characters';
+
+        if (toAdd.length > 0) {
+            updatePromises.push(
+                Model.updateMany({ _id: { $in: toAdd } }, { $addToSet: { [inverseField]: characterId } })
+            );
+        }
+        if (toRemove.length > 0) {
+            updatePromises.push(
+                Model.updateMany({ _id: { $in: toRemove } }, { $pull: { [inverseField]: characterId } })
+            );
+        }
+    }
+
+    await Promise.all(updatePromises);
+}
+
+
 // --- ROUTES ---
 
 // GET / : Obtiene todos los personajes con paginación
@@ -51,7 +99,6 @@ router.get("/", authMiddleware, async (req, res) => {
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .exec();
-
         const count = await Character.countDocuments({ owner: req.user.userId });
         res.json({
             characters,
@@ -71,7 +118,6 @@ router.get("/:id", authMiddleware, async (req, res) => {
         }
         const character = await Character.findOne({ _id: req.params.id, owner: req.user.userId })
             .populate(populationPaths);
-
         if (!character) return res.status(404).json({ message: "Character not found or access denied" });
         res.json(character);
     } catch (error) {
@@ -93,21 +139,18 @@ router.post("/", authMiddleware, async (req, res) => {
         const allowed = await canCreateCharacter(userId);
         if (!allowed) return res.status(403).json({ message: "Character creation limit reached." });
 
-        const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, userId);
+        const { enrichedBody } = await autoPopulateReferences(req.body, userId);
         enrichedBody.owner = userId;
 
         const newCharacter = new Character(enrichedBody);
         await newCharacter.save();
 
-        if (newlyCreated.length > 0) {
-            await Promise.all(newlyCreated.map(item => {
-                const Model = mongoose.model(item.model);
-                return Model.findByIdAndUpdate(item.id, { $push: { characters: newCharacter._id } });
-            }));
-        }
+        await syncAllReferences(newCharacter._id, null, newCharacter);
 
-        res.status(201).json(newCharacter);
+        const populatedCharacter = await Character.findById(newCharacter._id).populate(populationPaths);
+        res.status(201).json(populatedCharacter);
     } catch (error) {
+        console.error("Error creating character:", error);
         res.status(500).json({ message: "Error creating character", error: error.message });
     }
 });
@@ -116,27 +159,21 @@ router.post("/", authMiddleware, async (req, res) => {
 router.put("/:id", authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
-        const character = await Character.findOne({ _id: id, owner: req.user.userId });
-        if (!character) return res.status(404).json({ message: "Character not found or access denied" });
+        const userId = req.user.userId;
 
-        const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, req.user.userId);
-
-        const updatedCharacter = await Character.findByIdAndUpdate(
-            id,
-            { $set: enrichedBody },
-            { new: true, runValidators: true }
-        );
-
-        if (newlyCreated && newlyCreated.length > 0) {
-            await Promise.all(newlyCreated.map(item => {
-                const Model = mongoose.model(item.model);
-
-                return Model.findByIdAndUpdate(item.id, { $push: { characters: id } });
-            }));
+        const originalCharacter = await Character.findById(id).lean();
+        if (!originalCharacter || originalCharacter.owner.toString() !== userId) {
+            return res.status(404).json({ message: "Character not found or access denied" });
         }
 
-        res.json(updatedCharacter);
+        const { enrichedBody } = await autoPopulateReferences(req.body, userId);
 
+        await Character.findByIdAndUpdate(id, { $set: enrichedBody });
+
+        await syncAllReferences(id, originalCharacter, enrichedBody);
+
+        const updatedCharacter = await Character.findById(id).populate(populationPaths);
+        res.json(updatedCharacter);
     } catch (error) {
         console.error("Error updating character:", error);
         res.status(500).json({ message: "Error updating character", error: error.message });
@@ -147,34 +184,18 @@ router.put("/:id", authMiddleware, async (req, res) => {
 router.delete("/:id", authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
+
         const characterToDelete = await Character.findOne({ _id: id, owner: req.user.userId });
         if (!characterToDelete) {
             return res.status(404).json({ message: "Character not found or access denied" });
         }
-
-        // 1. Define todos los modelos y los campos que podrían referenciar a un personaje
-        const modelsAndFieldsToClean = [
-            { model: Character, fields: ['relationships.family', 'relationships.friends', 'relationships.enemies', 'relationships.romance'] },
-            { model: Ability, fields: ['characters'] },
-            { model: Item, fields: ['characters'] }
-        ];
-
-        // 2. Ejecuta la limpieza en paralelo
-        await Promise.all(
-            modelsAndFieldsToClean.flatMap(item =>
-                item.fields.map(field =>
-                    item.model.updateMany(
-                        { [field]: id },
-                        { $pull: { [field]: id } }
-                    )
-                )
-            )
-        );
+        await syncAllReferences(id, characterToDelete, null);
 
         await Character.findByIdAndDelete(id);
 
         res.json({ message: "Character deleted successfully and all references have been cleaned." });
     } catch (error) {
+        console.error("Error deleting character:", error);
         res.status(500).json({ message: "Error deleting character", error: error.message });
     }
 });
