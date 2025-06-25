@@ -1,3 +1,5 @@
+// 📁 /models/Economy.js
+
 const mongoose = require("mongoose");
 
 const economySchema = new mongoose.Schema({
@@ -13,26 +15,28 @@ const economySchema = new mongoose.Schema({
     keyIndustries: [String],
     economicSystem: String,
 
-    // Relaciones
-    characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
-    factions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
-    locations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
-    items: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
-    races: [{ type: mongoose.Schema.Types.ObjectId, ref: "Race" }],
-    stories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
-
-    // Campos raw al mismo nivel
-    rawCharacters: String,
-    rawFactions: String,
-    rawLocations: String,
-    rawItems: String,
-    rawRaces: String,
-    rawStories: String,
-
-    rawAssociations: [String], // Esto lo dejas si lo usas para algo específico
-
     world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
-    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+
+    // --- VINCULACIONES (AHORA TODAS EN PLURAL Y COMO ARRAYS) ---
+    characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    rawCharacters: [String],
+
+    factions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
+    rawFactions: [String],
+
+    locations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
+    rawLocations: [String],
+
+    items: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
+    rawItems: [String],
+
+    races: [{ type: mongoose.Schema.Types.ObjectId, ref: "Race" }],
+    rawRaces: [String],
+
+    stories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
+    rawStories: [String],
+
 }, { collection: "newworld.economy", timestamps: true });
 
 module.exports = mongoose.model("Economy", economySchema);

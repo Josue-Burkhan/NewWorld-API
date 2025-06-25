@@ -1,101 +1,125 @@
+// 📁 /routes/races-routes.js
+
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 const Race = require("../models/Race");
 const authMiddleware = require("../middleware/authMiddleware");
-const enforceLimit = require("../middleware/limitByUserType");
 const autoPopulateReferences = require("../utils/autoPopulateRefs");
+const enforceLimit = require("../middleware/limitByUserType");
 
+// --- MODELOS PARA LIMPIEZA DE REFERENCIAS ---
+const Character = require("../models/Character");
+// Añade aquí cualquier otro modelo que tenga un campo 'races'
 
-router.use(authMiddleware);
+// --- POPULATE HELPER ---
+const populationPaths = [
+    { path: 'languages', select: 'name' },    { path: 'characters', select: 'name' },
+    { path: 'locations', select: 'name' },    { path: 'religions', select: 'name' },
+    { path: 'stories', select: 'name' },      { path: 'events', select: 'name' },
+    { path: 'powerSystems', select: 'name' }
+];
 
-router.get("/", async (req, res) => {
+// --- ROUTES ---
+
+// GET / : Obtiene todas las razas con paginación
+router.get("/", authMiddleware, async (req, res) => {
     try {
+        const { page = 1, limit = 10, sort = 'name' } = req.query;
         const races = await Race.find({ owner: req.user.userId })
-            .populate({ path: "language", select: "_id name" })
-            .populate({ path: "characters", select: "_id name" })
-            .populate({ path: "locations", select: "_id name" })
-            .populate({ path: "religions", select: "_id name" })
-            .populate({ path: "stories", select: "_id title" })
-            .populate({ path: "events", select: "_id title" })
-            .populate({ path: "powerSystems", select: "_id name" });
-
-        res.json(races);
-    } catch (err) {
-        res.status(500).json({ message: "Error retrieving races" });
+            .populate(populationPaths)
+            .sort(sort)
+            .limit(limit * 1)
+            .skip((page - 1) * limit)
+            .exec();
+        
+        const count = await Race.countDocuments({ owner: req.user.userId });
+        res.json({
+            races,
+            totalPages: Math.ceil(count / limit),
+            currentPage: page
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Error retrieving races", error: error.message });
     }
 });
 
-router.get("/:id", async (req, res) => {
+// GET /:id : Obtiene una sola raza
+router.get("/:id", authMiddleware, async (req, res) => {
     try {
         const race = await Race.findOne({ _id: req.params.id, owner: req.user.userId })
-            .populate({ path: "language", select: "_id name" })
-            .populate({ path: "characters", select: "_id name" })
-            .populate({ path: "locations", select: "_id name" })
-            .populate({ path: "religions", select: "_id name" })
-            .populate({ path: "stories", select: "_id title" })
-            .populate({ path: "events", select: "_id title" })
-            .populate({ path: "powerSystems", select: "_id name" });
-
-        if (!race) {
-            return res.status(404).json({ message: "Race not found" });
-        }
-
+            .populate(populationPaths);
+        if (!race) return res.status(404).json({ message: "Race not found" });
         res.json(race);
-    } catch (err) {
-        res.status(500).json({ message: "Error retrieving race" });
-    }
-});
-router.post("/", enforceLimit(Race), async (req, res) => {
-    const i = req.body.name || req.body.world;
-    try {
-        await autoPopulateReferences(req.body, req.user.userId);
-
-        const newRace = new Race({
-            ...req.body,
-            owner: req.user.userId
-        });
-
-        const saved = await newRace.save();
-        res.status(201).json(saved);
-    } catch (err) {
-        res.status(400).json({ message: "Error creating race" });
+    } catch (error) {
+        res.status(500).json({ message: "Error retrieving race", error: error.message });
     }
 });
 
-router.put("/:id", async (req, res) => {
-    const i = req.body.name || req.body.world;
+// POST / : Crea una nueva raza (con vinculación de vuelta)
+router.post("/", authMiddleware, enforceLimit(Race), async (req, res) => {
     try {
-        await autoPopulateReferences(req.body, req.user.userId);
+        const userId = req.user.userId;
+        const { name, world } = req.body;
+        
+        if (!world) return res.status(400).json({ message: "World ID is required." });
 
-        const updated = await Race.findOneAndUpdate(
-            { _id: req.params.id, owner: req.user.userId },
-            req.body,
-            { new: true }
-        );
+        const existingRace = await Race.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') }, world });
+        if (existingRace) return res.status(409).json({ message: `A race named "${name}" already exists in this world.` });
+        
+        const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, userId);
+        enrichedBody.owner = userId;
 
-        if (!updated) {
-            return res.status(404).json({ message: "Race not found" });
+        const newRace = new Race(enrichedBody);
+        await newRace.save();
+
+        if (newlyCreated.length > 0) {
+            await Promise.all(newlyCreated.map(item => {
+                const Model = mongoose.model(item.model);
+                return Model.findByIdAndUpdate(item.id, { $push: { races: newRace._id } });
+            }));
         }
-
-        res.json(updated);
-    } catch (err) {
-        res.status(400).json({ message: "Error updating race" });
+        
+        res.status(201).json(newRace);
+    } catch (error) {
+        res.status(400).json({ message: "Error creating race", error: error.message });
     }
 });
 
-
-router.delete("/:id", async (req, res) => {
+// PUT /:id : Actualiza una raza
+router.put("/:id", authMiddleware, async (req, res) => {
     try {
-        const deleted = await Race.findOneAndDelete({
-            _id: req.params.id,
-            owner: req.user.userId
-        });
-        if (!deleted) {
-            return res.status(404).json({ message: "Race not found" });
-        }
-        res.json({ message: "Race deleted" });
-    } catch (err) {
-        res.status(500).json({ message: "Error deleting race" });
+        const { id } = req.params;
+        const race = await Race.findOne({ _id: id, owner: req.user.userId });
+        if (!race) return res.status(404).json({ message: "Race not found or access denied" });
+
+        const { enrichedBody } = await autoPopulateReferences(req.body, req.user.userId);
+        
+        const updatedRace = await Race.findByIdAndUpdate(id, { $set: enrichedBody }, { new: true, runValidators: true });
+        res.json(updatedRace);
+    } catch (error) {
+        res.status(400).json({ message: "Error updating race", error: error.message });
+    }
+});
+
+// DELETE /:id : Borra una raza y limpia todas las referencias
+router.delete("/:id", authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const raceToDelete = await Race.findOne({ _id: id, owner: req.user.userId });
+        if (!raceToDelete) return res.status(404).json({ message: "Race not found" });
+
+        const modelsToClean = [Character]; // Añade aquí otros modelos que tengan un campo 'races'
+        const referenceField = 'races';
+
+        await Promise.all(modelsToClean.map(Model => 
+            Model.updateMany({ [referenceField]: id }, { $pull: { [referenceField]: id } })
+        ));
+
+        await Race.findByIdAndDelete(id);
+        res.json({ message: "Race deleted successfully and all references cleaned." });
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting race", error: error.message });
     }
 });
 

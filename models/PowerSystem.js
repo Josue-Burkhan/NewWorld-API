@@ -1,40 +1,41 @@
+// 📁 /models/PowerSystem.js
+
 const mongoose = require("mongoose");
 
 const powerSystemSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  description: { type: String },
+    name: { type: String, required: true },
+    description: { type: String },
+    sourceOfPower: { type: String },
+    rules: { type: String },
+    limitations: { type: String },
+    classificationTypes: [String],
+    symbolsOrMarks: { type: String },
+    customNotes: { type: String, maxlength: 250 },
+    world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 
-  sourceOfPower: { type: String },
-  rules: { type: String },
-  limitations: { type: String },
-  classificationTypes: [String],
-  symbolsOrMarks: { type: String },
+    // --- VINCULACIONES (AHORA TODAS EN PLURAL, COMO ARRAYS Y CON RAW) ---
+    characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    rawCharacters: [String],
 
-  characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
-  rawCharacters: [String],
+    abilities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
+    rawAbilities: [String],
 
-  relatedAbilities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
-  rawRelatedAbilities: [String],
+    factions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
+    rawFactions: [String],
 
-  usedInFactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
-  rawUsedInFactions: [String],
+    events: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+    rawEvents: [String],
 
-  associatedEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
-  rawAssociatedEvents: [String],
+    stories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
+    rawStories: [String],
 
-  appearsInStories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
-  rawAppearsInStories: [String],
+    creatures: [{ type: mongoose.Schema.Types.ObjectId, ref: "Creature" }],
+    rawCreatures: [String],
 
-  linkedCreatures: [{ type: mongoose.Schema.Types.ObjectId, ref: "Creature" }],
-  rawLinkedCreatures: [String],
+    religions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Religion" }],
+    rawReligions: [String],
 
-  linkedReligion: { type: mongoose.Schema.Types.ObjectId, ref: "Religion" },
-  rawLinkedReligion: String,
-
-  customNotes: { type: String, maxlength: 250 },
-
-  world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
 }, { collection: "newworld.powersystem", timestamps: true });
 
 module.exports = mongoose.model("PowerSystem", powerSystemSchema);

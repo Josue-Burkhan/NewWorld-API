@@ -1,3 +1,5 @@
+// 📁 /models/Creature.js
+
 const mongoose = require("mongoose");
 
 const creatureSchema = new mongoose.Schema({
@@ -6,33 +8,37 @@ const creatureSchema = new mongoose.Schema({
     description: { type: String },
     habitat: { type: String },
     behavior: { type: String },
-    abilities: [String],
     weaknesses: [String],
     domesticated: { type: Boolean, default: false },
-
-    // Relaciones
-    characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
-    associatedFactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
-    linkedEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
-    appearsInStories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
-    originLocation: { type: mongoose.Schema.Types.ObjectId, ref: "Location" },
-    relatedPowerSystem: { type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" },
-    associatedReligion: { type: mongoose.Schema.Types.ObjectId, ref: "Religion" },
-
-    // Campos raw alineados al mismo nivel
-    rawAssociatedFactions: [String],
-    rawLinkedEvents: [String],
-    rawAppearsInStories: [String],
-    rawOriginLocation: String,
-    rawRelatedPowerSystem: String,
-    rawAssociatedReligion: String,
-
-    // Notas
     customNotes: { type: String, maxlength: 250 },
-
-    // Propiedades necesarias
     world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
-    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+
+    // --- VINCULACIONES
+    characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    rawCharacters: [String],
+
+    abilities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
+    rawAbilities: [String],
+
+    factions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
+    rawFactions: [String],
+
+    events: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+    rawEvents: [String],
+
+    stories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
+    rawStories: [String],
+
+    locations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
+    rawLocations: [String],
+
+    powerSystems: [{ type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" }],
+    rawPowerSystems: [String],
+
+    religions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Religion" }],
+    rawReligions: [String],
+
 }, {
     collection: "newworld.creature",
     timestamps: true

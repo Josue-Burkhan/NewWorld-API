@@ -1,58 +1,58 @@
+// 📁 /models/Item.js
+
 const mongoose = require("mongoose");
 
 const itemSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+    name: { type: String, required: true },
+    description: { type: String },
+    type: { type: String },
+    origin: { type: String },
+    material: { type: String },
+    weight: { type: Number },
+    value: { type: String },
+    rarity: { type: String },
+    magicalProperties: [String],
+    technologicalFeatures: [String],
+    customEffects: [String],
+    isUnique: { type: Boolean, default: false },
+    isDestroyed: { type: Boolean, default: false },
+    customNotes: { type: String, maxlength: 250 },
+    world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 
-  // Descripción general
-  description: { type: String },
-  type: { type: String },
-  origin: { type: String },
-  material: { type: String },
-  weight: { type: Number },
-  value: { type: String },
-  rarity: { type: String },
+    // --- VINCULACIONES (AHORA TODAS EN PLURAL, COMO ARRAYS Y CON RAW) ---
+    createdBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    rawCreatedBy: [String],
 
-  // Relacionado con el mundo y su historia
-  characters: { type: mongoose.Schema.Types.ObjectId, ref: "Character" },
-  usedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
-  associatedFactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
-  associatedEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
-  associatedStories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
-  foundInLocations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
-  religion: { type: mongoose.Schema.Types.ObjectId, ref: "Religion" },
-  powerSystem: { type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" },
-  language: { type: mongoose.Schema.Types.ObjectId, ref: "Language" },
+    usedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    rawUsedBy: [String],
 
-  // Raw fields para autocompletar
-  rawCreatedBy: String,
-  rawUsedBy: [String],
-  rawAssociatedFactions: [String],
-  rawAssociatedEvents: [String],
-  rawAssociatedStories: [String],
-  rawFoundInLocations: [String],
-  rawReligion: String,
-  rawPowerSystem: String,
-  rawLanguage: String,
+    currentOwnerCharacter: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    rawCurrentOwnerCharacter: [String],
 
-  // Características especiales
-  magicalProperties: [String],
-  technologicalFeatures: [String],
-  abilitiesGranted: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
-  rawAbilitiesGranted: [String],
-  customEffects: [String],
+    factions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
+    rawFactions: [String],
 
-  // Extras
-  isUnique: { type: Boolean, default: false },
-  isDestroyed: { type: Boolean, default: false },
-  currentOwner: { type: mongoose.Schema.Types.ObjectId, ref: "Character" },
-  rawCurrentOwner: String,
+    events: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+    rawEvents: [String],
 
-  // Texto libre adicional (máx. 250 caracteres)
-  customNotes: { type: String, maxlength: 250 },
+    stories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
+    rawStories: [String],
 
-  // Propiedades necesarias
-  world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
+    locations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
+    rawLocations: [String],
+
+    religions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Religion" }],
+    rawReligions: [String],
+
+    powerSystems: [{ type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" }],
+    rawPowerSystems: [String],
+
+    languages: [{ type: mongoose.Schema.Types.ObjectId, ref: "Language" }],
+    rawLanguages: [String],
+
+    abilities: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ability" }],
+    rawAbilities: [String],
 
 }, { collection: "newworld.item", timestamps: true });
 

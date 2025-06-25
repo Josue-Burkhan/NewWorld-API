@@ -1,44 +1,45 @@
+// 📁 /models/Technology.js
+
 const mongoose = require("mongoose");
 
 const technologySchema = new mongoose.Schema({
     name: { type: String, required: true },
     description: String,
-
     techType: { type: String },
     origin: { type: String },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Character" },
-    rawCreatedBy: String,
-
     yearCreated: Number,
     currentUse: String,
     limitations: String,
     energySource: String,
+    notes: { type: String, maxlength: 250 },
+    world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+
+    // --- VINCULACIONES (AHORA TODAS EN PLURAL, COMO ARRAYS Y CON RAW) ---
+    creators: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
+    rawCreators: [String],
 
     characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
     rawCharacters: [String],
 
-    usedByFactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
-    rawUsedByFactions: [String],
+    factions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
+    rawFactions: [String],
 
-    linkedItems: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
-    rawLinkedItems: [String],
+    items: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
+    rawItems: [String],
 
-    linkedEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
-    rawLinkedEvents: [String],
+    events: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+    rawEvents: [String],
 
-    appearsInStories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
-    rawAppearsInStories: [String],
+    stories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
+    rawStories: [String],
 
-    createdInLocation: { type: mongoose.Schema.Types.ObjectId, ref: "Location" },
-    rawCreatedInLocation: String,
+    locations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
+    rawLocations: [String],
 
-    relatedPowerSystem: { type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" },
-    rawRelatedPowerSystem: String,
+    powerSystems: [{ type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" }],
+    rawPowerSystems: [String],
 
-    notes: { type: String, maxlength: 250 },
-
-    world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
-    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
 }, { collection: "newworld.technology", timestamps: true });
 
 module.exports = mongoose.model("Technology", technologySchema);

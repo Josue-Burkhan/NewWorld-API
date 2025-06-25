@@ -1,9 +1,10 @@
+// 📁 /models/Religion.js
+
 const mongoose = require("mongoose");
 
 const religionSchema = new mongoose.Schema({
     name: { type: String, required: true },
     description: String,
-
     deityNames: [String],
     originStory: String,
     practices: [String],
@@ -11,33 +12,32 @@ const religionSchema = new mongoose.Schema({
     sacredTexts: [String],
     festivals: [String],
     symbols: [String],
+    notes: { type: String, maxlength: 250 },
+    world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 
-    // Relaciones
+    // --- VINCULACIONES (AHORA TODAS EN PLURAL, COMO ARRAYS Y CON RAW) ---
     characters: [{ type: mongoose.Schema.Types.ObjectId, ref: "Character" }],
     rawCharacters: [String],
 
-    associatedFactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
-    rawAssociatedFactions: [String],
+    factions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faction" }],
+    rawFactions: [String],
 
-    practicedInLocations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
-    rawPracticedInLocations: [String],
+    locations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Location" }],
+    rawLocations: [String],
 
-    linkedCreatures: [{ type: mongoose.Schema.Types.ObjectId, ref: "Creature" }],
-    rawLinkedCreatures: [String],
+    creatures: [{ type: mongoose.Schema.Types.ObjectId, ref: "Creature" }],
+    rawCreatures: [String],
 
-    linkedEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
-    rawLinkedEvents: [String],
+    events: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+    rawEvents: [String],
 
-    linkedPowerSystems: [{ type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" }],
-    rawLinkedPowerSystems: [String],
+    powerSystems: [{ type: mongoose.Schema.Types.ObjectId, ref: "PowerSystem" }],
+    rawPowerSystems: [String],
 
-    appearsInStories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
-    rawAppearsInStories: [String],
+    stories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Story" }],
+    rawStories: [String],
 
-    notes: { type: String, maxlength: 250 },
-
-    world: { type: mongoose.Schema.Types.ObjectId, ref: "World", required: true },
-    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
 }, { collection: "newworld.religion", timestamps: true });
 
 module.exports = mongoose.model("Religion", religionSchema);
