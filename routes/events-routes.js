@@ -16,8 +16,8 @@ const Creature = require("../models/Creature");
 // --- POPULATE HELPER ---
 const populationPaths = [
     { path: 'characters', select: 'name' }, { path: 'factions', select: 'name' },
-    { path: 'locations', select: 'name' },  { path: 'items', select: 'name' },
-    { path: 'abilities', select: 'name' },  { path: 'stories', select: 'name' },
+    { path: 'locations', select: 'name' }, { path: 'items', select: 'name' },
+    { path: 'abilities', select: 'name' }, { path: 'stories', select: 'name' },
     { path: 'powerSystems', select: 'name' }, { path: 'creatures', select: 'name' },
     { path: 'religions', select: 'name' }
 ];
@@ -34,7 +34,7 @@ router.get("/", authMiddleware, async (req, res) => {
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .exec();
-        
+
         const count = await Event.countDocuments({ owner: req.user.userId });
         res.json({
             events,
@@ -63,12 +63,12 @@ router.post("/", authMiddleware, enforceLimit(Event), async (req, res) => {
     try {
         const userId = req.user.userId;
         const { name, world } = req.body;
-        
+
         if (!world) return res.status(400).json({ message: "World ID is required." });
 
         const existingEvent = await Event.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') }, world });
         if (existingEvent) return res.status(409).json({ message: `An event named "${name}" already exists in this world.` });
-        
+
         const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, userId);
         enrichedBody.owner = userId;
 
@@ -81,7 +81,7 @@ router.post("/", authMiddleware, enforceLimit(Event), async (req, res) => {
                 return Model.findByIdAndUpdate(item.id, { $push: { events: newEvent._id } });
             }));
         }
-        
+
         res.status(201).json(newEvent);
     } catch (error) {
         res.status(400).json({ message: "Error creating event", error: error.message });
@@ -91,16 +91,28 @@ router.post("/", authMiddleware, enforceLimit(Event), async (req, res) => {
 // PUT /:id : Actualiza un evento
 router.put("/:id", authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id } = req.params; // ID del evento que se edita
         const event = await Event.findOne({ _id: id, owner: req.user.userId });
         if (!event) return res.status(404).json({ message: "Event not found or access denied" });
 
-        const { enrichedBody } = await autoPopulateReferences(req.body, req.user.userId);
-        
+        // CAMBIO: Capturamos 'newlyCreated'
+        const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, req.user.userId);
+
         const updatedEvent = await Event.findByIdAndUpdate(id, { $set: enrichedBody }, { new: true, runValidators: true });
+
+        // AÑADIDO: Lógica de vinculación de vuelta
+        if (newlyCreated && newlyCreated.length > 0) {
+            await Promise.all(newlyCreated.map(item => {
+                const Model = mongoose.model(item.model);
+                // Vincula la nueva entidad con este evento
+                return Model.findByIdAndUpdate(item.id, { $push: { events: id } });
+            }));
+        }
+
         res.json(updatedEvent);
     } catch (error) {
-        res.status(400).json({ message: "Error updating event", error: error.message });
+        console.error("Error updating event:", error);
+        res.status(500).json({ message: "Error updating event", error: error.message });
     }
 });
 
@@ -114,7 +126,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         const modelsToClean = [Character, Creature]; // Añade aquí otros modelos que tengan un campo 'events'
         const referenceField = 'events';
 
-        await Promise.all(modelsToClean.map(Model => 
+        await Promise.all(modelsToClean.map(Model =>
             Model.updateMany({ [referenceField]: id }, { $pull: { [referenceField]: id } })
         ));
 

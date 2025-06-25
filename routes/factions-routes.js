@@ -91,16 +91,28 @@ router.post("/", authMiddleware, enforceLimit(Faction), async (req, res) => {
 // PUT /:id : Actualiza una facción
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params; // ID de la facción que se edita
     const faction = await Faction.findOne({ _id: id, owner: req.user.userId });
     if (!faction) return res.status(404).json({ message: "Faction not found or access denied" });
 
-    const { enrichedBody } = await autoPopulateReferences(req.body, req.user.userId);
+    // CAMBIO: Capturamos 'newlyCreated'
+    const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, req.user.userId);
 
     const updatedFaction = await Faction.findByIdAndUpdate(id, { $set: enrichedBody }, { new: true, runValidators: true });
+
+    // AÑADIDO: Lógica de vinculación de vuelta
+    if (newlyCreated && newlyCreated.length > 0) {
+      await Promise.all(newlyCreated.map(item => {
+        const Model = mongoose.model(item.model);
+        // Vincula la nueva entidad con esta facción
+        return Model.findByIdAndUpdate(item.id, { $push: { factions: id } });
+      }));
+    }
+
     res.json(updatedFaction);
   } catch (error) {
-    res.status(400).json({ message: "Error updating faction", error: error.message });
+    console.error("Error updating faction:", error);
+    res.status(500).json({ message: "Error updating faction", error: error.message });
   }
 });
 

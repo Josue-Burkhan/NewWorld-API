@@ -92,16 +92,28 @@ router.post("/", authMiddleware, enforceLimit(Item), async (req, res) => {
 // PUT /:id : Actualiza un ítem
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params; // ID del ítem que se edita
     const item = await Item.findOne({ _id: id, owner: req.user.userId });
     if (!item) return res.status(404).json({ message: "Item not found or access denied" });
 
-    const { enrichedBody } = await autoPopulateReferences(req.body, req.user.userId);
+    // CAMBIO: Capturamos 'newlyCreated'
+    const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, req.user.userId);
 
     const updatedItem = await Item.findByIdAndUpdate(id, { $set: enrichedBody }, { new: true, runValidators: true });
+
+    // AÑADIDO: Lógica de vinculación de vuelta
+    if (newlyCreated && newlyCreated.length > 0) {
+      await Promise.all(newlyCreated.map(item => {
+        const Model = mongoose.model(item.model);
+        // Vincula la nueva entidad con este ítem
+        return Model.findByIdAndUpdate(item.id, { $push: { items: id } });
+      }));
+    }
+
     res.json(updatedItem);
   } catch (error) {
-    res.status(400).json({ message: "Error updating item", error: error.message });
+    console.error("Error updating item:", error);
+    res.status(500).json({ message: "Error updating item", error: error.message });
   }
 });
 

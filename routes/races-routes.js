@@ -14,9 +14,9 @@ const Character = require("../models/Character");
 
 // --- POPULATE HELPER ---
 const populationPaths = [
-    { path: 'languages', select: 'name' },    { path: 'characters', select: 'name' },
-    { path: 'locations', select: 'name' },    { path: 'religions', select: 'name' },
-    { path: 'stories', select: 'name' },      { path: 'events', select: 'name' },
+    { path: 'languages', select: 'name' }, { path: 'characters', select: 'name' },
+    { path: 'locations', select: 'name' }, { path: 'religions', select: 'name' },
+    { path: 'stories', select: 'name' }, { path: 'events', select: 'name' },
     { path: 'powerSystems', select: 'name' }
 ];
 
@@ -32,7 +32,7 @@ router.get("/", authMiddleware, async (req, res) => {
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .exec();
-        
+
         const count = await Race.countDocuments({ owner: req.user.userId });
         res.json({
             races,
@@ -61,12 +61,12 @@ router.post("/", authMiddleware, enforceLimit(Race), async (req, res) => {
     try {
         const userId = req.user.userId;
         const { name, world } = req.body;
-        
+
         if (!world) return res.status(400).json({ message: "World ID is required." });
 
         const existingRace = await Race.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') }, world });
         if (existingRace) return res.status(409).json({ message: `A race named "${name}" already exists in this world.` });
-        
+
         const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, userId);
         enrichedBody.owner = userId;
 
@@ -79,7 +79,7 @@ router.post("/", authMiddleware, enforceLimit(Race), async (req, res) => {
                 return Model.findByIdAndUpdate(item.id, { $push: { races: newRace._id } });
             }));
         }
-        
+
         res.status(201).json(newRace);
     } catch (error) {
         res.status(400).json({ message: "Error creating race", error: error.message });
@@ -89,16 +89,28 @@ router.post("/", authMiddleware, enforceLimit(Race), async (req, res) => {
 // PUT /:id : Actualiza una raza
 router.put("/:id", authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id } = req.params; // ID de la raza que se edita
         const race = await Race.findOne({ _id: id, owner: req.user.userId });
         if (!race) return res.status(404).json({ message: "Race not found or access denied" });
 
-        const { enrichedBody } = await autoPopulateReferences(req.body, req.user.userId);
-        
+        // CAMBIO: Capturamos 'newlyCreated'
+        const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, req.user.userId);
+
         const updatedRace = await Race.findByIdAndUpdate(id, { $set: enrichedBody }, { new: true, runValidators: true });
+
+        // AÑADIDO: Lógica de vinculación de vuelta
+        if (newlyCreated && newlyCreated.length > 0) {
+            await Promise.all(newlyCreated.map(item => {
+                const Model = mongoose.model(item.model);
+                // Vincula la nueva entidad con esta raza
+                return Model.findByIdAndUpdate(item.id, { $push: { races: id } });
+            }));
+        }
+
         res.json(updatedRace);
     } catch (error) {
-        res.status(400).json({ message: "Error updating race", error: error.message });
+        console.error("Error updating race:", error);
+        res.status(500).json({ message: "Error updating race", error: error.message });
     }
 });
 
@@ -112,7 +124,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         const modelsToClean = [Character]; // Añade aquí otros modelos que tengan un campo 'races'
         const referenceField = 'races';
 
-        await Promise.all(modelsToClean.map(Model => 
+        await Promise.all(modelsToClean.map(Model =>
             Model.updateMany({ [referenceField]: id }, { $pull: { [referenceField]: id } })
         ));
 

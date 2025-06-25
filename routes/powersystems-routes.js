@@ -90,16 +90,28 @@ router.post("/", authMiddleware, enforceLimit(PowerSystem), async (req, res) => 
 // PUT /:id : Actualiza un sistema de poder
 router.put("/:id", authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id } = req.params; // ID del sistema de poder que se edita
         const powerSystem = await PowerSystem.findOne({ _id: id, owner: req.user.userId });
         if (!powerSystem) return res.status(404).json({ message: "PowerSystem not found or access denied" });
 
-        const { enrichedBody } = await autoPopulateReferences(req.body, req.user.userId);
+        // CAMBIO: Capturamos 'newlyCreated'
+        const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, req.user.userId);
 
         const updatedPowerSystem = await PowerSystem.findByIdAndUpdate(id, { $set: enrichedBody }, { new: true, runValidators: true });
+
+        // AÑADIDO: Lógica de vinculación de vuelta
+        if (newlyCreated && newlyCreated.length > 0) {
+            await Promise.all(newlyCreated.map(item => {
+                const Model = mongoose.model(item.model);
+                // Vincula la nueva entidad con este sistema de poder
+                return Model.findByIdAndUpdate(item.id, { $push: { powerSystems: id } });
+            }));
+        }
+
         res.json(updatedPowerSystem);
     } catch (error) {
-        res.status(400).json({ message: "Error updating power system", error: error.message });
+        console.error("Error updating power system:", error);
+        res.status(500).json({ message: "Error updating power system", error: error.message });
     }
 });
 

@@ -39,7 +39,7 @@ router.get("/", authMiddleware, async (req, res) => {
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .exec();
-        
+
         const count = await Location.countDocuments({ owner: req.user.userId });
         res.json({
             locations,
@@ -68,12 +68,12 @@ router.post("/", authMiddleware, enforceLimit(Location), async (req, res) => {
     try {
         const userId = req.user.userId;
         const { name, world } = req.body;
-        
+
         if (!world) return res.status(400).json({ message: "World ID is required." });
 
         const existingLocation = await Location.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') }, world });
         if (existingLocation) return res.status(409).json({ message: `A location named "${name}" already exists in this world.` });
-        
+
         const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, userId);
         enrichedBody.owner = userId;
 
@@ -86,7 +86,7 @@ router.post("/", authMiddleware, enforceLimit(Location), async (req, res) => {
                 return Model.findByIdAndUpdate(item.id, { $push: { locations: newLocation._id } });
             }));
         }
-        
+
         res.status(201).json(newLocation);
     } catch (error) {
         res.status(400).json({ message: "Error creating location", error: error.message });
@@ -96,16 +96,28 @@ router.post("/", authMiddleware, enforceLimit(Location), async (req, res) => {
 // PUT /:id : Actualiza una localización
 router.put("/:id", authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id } = req.params; // ID de la localización que se edita
         const location = await Location.findOne({ _id: id, owner: req.user.userId });
         if (!location) return res.status(404).json({ message: "Location not found or access denied" });
 
-        const { enrichedBody } = await autoPopulateReferences(req.body, req.user.userId);
-        
+        // CAMBIO: Capturamos 'newlyCreated'
+        const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, req.user.userId);
+
         const updatedLocation = await Location.findByIdAndUpdate(id, { $set: enrichedBody }, { new: true, runValidators: true });
+
+        // AÑADIDO: Lógica de vinculación de vuelta
+        if (newlyCreated && newlyCreated.length > 0) {
+            await Promise.all(newlyCreated.map(item => {
+                const Model = mongoose.model(item.model);
+                // Vincula la nueva entidad con esta localización
+                return Model.findByIdAndUpdate(item.id, { $push: { locations: id } });
+            }));
+        }
+
         res.json(updatedLocation);
     } catch (error) {
-        res.status(400).json({ message: "Error updating location", error: error.message });
+        console.error("Error updating location:", error);
+        res.status(500).json({ message: "Error updating location", error: error.message });
     }
 });
 

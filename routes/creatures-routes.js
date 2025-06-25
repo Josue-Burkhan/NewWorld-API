@@ -15,8 +15,8 @@ const Character = require("../models/Character");
 // --- POPULATE HELPER ---
 const populationPaths = [
     { path: 'characters', select: 'name' }, { path: 'factions', select: 'name' },
-    { path: 'events', select: 'name' },     { path: 'stories', select: 'name' },
-    { path: 'locations', select: 'name' },  { path: 'powerSystems', select: 'name' },
+    { path: 'events', select: 'name' }, { path: 'stories', select: 'name' },
+    { path: 'locations', select: 'name' }, { path: 'powerSystems', select: 'name' },
     { path: 'religions', select: 'name' }
 ];
 
@@ -32,7 +32,7 @@ router.get("/", authMiddleware, async (req, res) => {
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .exec();
-        
+
         const count = await Creature.countDocuments({ owner: req.user.userId });
         res.json({
             creatures,
@@ -61,12 +61,12 @@ router.post("/", authMiddleware, enforceLimit(Creature), async (req, res) => {
     try {
         const userId = req.user.userId;
         const { name, world } = req.body;
-        
+
         if (!world) return res.status(400).json({ message: "World ID is required." });
 
         const existingCreature = await Creature.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') }, world });
         if (existingCreature) return res.status(409).json({ message: `A creature named "${name}" already exists in this world.` });
-        
+
         const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, userId);
         enrichedBody.owner = userId;
 
@@ -79,7 +79,7 @@ router.post("/", authMiddleware, enforceLimit(Creature), async (req, res) => {
                 return Model.findByIdAndUpdate(item.id, { $push: { creatures: newCreature._id } });
             }));
         }
-        
+
         res.status(201).json(newCreature);
     } catch (error) {
         res.status(400).json({ message: "Error creating creature", error: error.message });
@@ -89,16 +89,28 @@ router.post("/", authMiddleware, enforceLimit(Creature), async (req, res) => {
 // PUT /:id : Actualiza una criatura
 router.put("/:id", authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id } = req.params; // ID de la criatura que se edita
         const creature = await Creature.findOne({ _id: id, owner: req.user.userId });
         if (!creature) return res.status(404).json({ message: "Creature not found or access denied" });
 
-        const { enrichedBody } = await autoPopulateReferences(req.body, req.user.userId);
-        
+        // CAMBIO: Capturamos 'newlyCreated'
+        const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, req.user.userId);
+
         const updatedCreature = await Creature.findByIdAndUpdate(id, { $set: enrichedBody }, { new: true, runValidators: true });
+
+        // AÑADIDO: Lógica de vinculación de vuelta
+        if (newlyCreated && newlyCreated.length > 0) {
+            await Promise.all(newlyCreated.map(item => {
+                const Model = mongoose.model(item.model);
+                // Vincula la nueva entidad con esta criatura
+                return Model.findByIdAndUpdate(item.id, { $push: { creatures: id } });
+            }));
+        }
+
         res.json(updatedCreature);
     } catch (error) {
-        res.status(400).json({ message: "Error updating creature", error: error.message });
+        console.error("Error updating creature:", error);
+        res.status(500).json({ message: "Error updating creature", error: error.message });
     }
 });
 
@@ -112,7 +124,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         const modelsToClean = [Character]; // Añade aquí otros modelos si es necesario
         const referenceField = 'creatures';
 
-        await Promise.all(modelsToClean.map(Model => 
+        await Promise.all(modelsToClean.map(Model =>
             Model.updateMany({ [referenceField]: id }, { $pull: { [referenceField]: id } })
         ));
 

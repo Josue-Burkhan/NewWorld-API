@@ -17,11 +17,11 @@ const Event = require('../models/Event');
 // --- POPULATE HELPER ---
 const populationPaths = [
     { path: 'characters', select: 'name' }, { path: 'locations', select: 'name' },
-    { path: 'items', select: 'name' },      { path: 'events', select: 'name' },
-    { path: 'factions', select: 'name' },   { path: 'abilities', select: 'name' },
+    { path: 'items', select: 'name' }, { path: 'events', select: 'name' },
+    { path: 'factions', select: 'name' }, { path: 'abilities', select: 'name' },
     { path: 'powerSystems', select: 'name' }, { path: 'creatures', select: 'name' },
-    { path: 'religions', select: 'name' },  { path: 'technologies', select: 'name' },
-    { path: 'races', select: 'name' },      { path: 'economies', select: 'name' }
+    { path: 'religions', select: 'name' }, { path: 'technologies', select: 'name' },
+    { path: 'races', select: 'name' }, { path: 'economies', select: 'name' }
 ];
 
 // --- ROUTES ---
@@ -36,7 +36,7 @@ router.get("/", authMiddleware, async (req, res) => {
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .exec();
-        
+
         const count = await Story.countDocuments({ owner: req.user.userId });
         res.json({
             stories,
@@ -65,12 +65,12 @@ router.post("/", authMiddleware, enforceLimit(Story), async (req, res) => {
     try {
         const userId = req.user.userId;
         const { name, world } = req.body;
-        
+
         if (!world) return res.status(400).json({ message: "World ID is required." });
 
         const existingStory = await Story.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') }, world });
         if (existingStory) return res.status(409).json({ message: `A story named "${name}" already exists in this world.` });
-        
+
         const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, userId);
         enrichedBody.owner = userId;
 
@@ -83,7 +83,7 @@ router.post("/", authMiddleware, enforceLimit(Story), async (req, res) => {
                 return Model.findByIdAndUpdate(item.id, { $push: { stories: newStory._id } });
             }));
         }
-        
+
         res.status(201).json(newStory);
     } catch (error) {
         res.status(400).json({ message: "Error creating story", error: error.message });
@@ -93,16 +93,28 @@ router.post("/", authMiddleware, enforceLimit(Story), async (req, res) => {
 // PUT /:id : Actualiza una historia
 router.put("/:id", authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id } = req.params; // ID de la historia que se edita
         const story = await Story.findOne({ _id: id, owner: req.user.userId });
         if (!story) return res.status(404).json({ message: "Story not found or access denied" });
 
-        const { enrichedBody } = await autoPopulateReferences(req.body, req.user.userId);
-        
+        // CAMBIO: Capturamos 'newlyCreated'
+        const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, req.user.userId);
+
         const updatedStory = await Story.findByIdAndUpdate(id, { $set: enrichedBody }, { new: true, runValidators: true });
+
+        // AÑADIDO: Lógica de vinculación de vuelta
+        if (newlyCreated && newlyCreated.length > 0) {
+            await Promise.all(newlyCreated.map(item => {
+                const Model = mongoose.model(item.model);
+                // Vincula la nueva entidad con esta historia
+                return Model.findByIdAndUpdate(item.id, { $push: { stories: id } });
+            }));
+        }
+
         res.json(updatedStory);
     } catch (error) {
-        res.status(400).json({ message: "Error updating story", error: error.message });
+        console.error("Error updating story:", error);
+        res.status(500).json({ message: "Error updating story", error: error.message });
     }
 });
 
@@ -116,7 +128,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         const modelsToClean = [Character, Item, Event]; // Añade aquí otros modelos que tengan un campo 'stories'
         const referenceField = 'stories';
 
-        await Promise.all(modelsToClean.map(Model => 
+        await Promise.all(modelsToClean.map(Model =>
             Model.updateMany({ [referenceField]: id }, { $pull: { [referenceField]: id } })
         ));
 

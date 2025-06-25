@@ -17,9 +17,9 @@ const Creature = require("../models/Creature");
 // --- POPULATE HELPER ---
 const populationPaths = [
     { path: 'characters', select: 'name' }, { path: 'powerSystems', select: 'name' },
-    { path: 'stories', select: 'name' },    { path: 'events', select: 'name' },
-    { path: 'items', select: 'name' },       { path: 'technologies', select: 'name' },
-    { path: 'creatures', select: 'name' },   { path: 'religions', select: 'name' },
+    { path: 'stories', select: 'name' }, { path: 'events', select: 'name' },
+    { path: 'items', select: 'name' }, { path: 'technologies', select: 'name' },
+    { path: 'creatures', select: 'name' }, { path: 'religions', select: 'name' },
     { path: 'races', select: 'name' }
 ];
 
@@ -35,7 +35,7 @@ router.get("/", authMiddleware, async (req, res) => {
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .exec();
-        
+
         const count = await Ability.countDocuments({ owner: req.user.userId });
         res.json({
             abilities,
@@ -68,12 +68,12 @@ router.post("/", authMiddleware, enforceLimit(Ability), async (req, res) => {
     try {
         const userId = req.user.userId;
         const { name, world } = req.body;
-        
+
         if (!world) return res.status(400).json({ message: "World ID is required." });
 
         const existingAbility = await Ability.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') }, world });
         if (existingAbility) return res.status(409).json({ message: `An ability named "${name}" already exists in this world.` });
-        
+
         const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, userId);
         enrichedBody.owner = userId;
 
@@ -86,7 +86,7 @@ router.post("/", authMiddleware, enforceLimit(Ability), async (req, res) => {
                 return Model.findByIdAndUpdate(item.id, { $push: { abilities: newAbility._id } });
             }));
         }
-        
+
         res.status(201).json(newAbility);
     } catch (error) {
         res.status(400).json({ message: "Error creating ability", error: error.message });
@@ -96,21 +96,32 @@ router.post("/", authMiddleware, enforceLimit(Ability), async (req, res) => {
 // PUT /:id : Actualiza una habilidad
 router.put("/:id", authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id } = req.params; // ID de la habilidad que se edita
         const ability = await Ability.findOne({ _id: id, owner: req.user.userId });
         if (!ability) return res.status(404).json({ message: "Ability not found or access denied" });
 
-        const { enrichedBody } = await autoPopulateReferences(req.body, req.user.userId);
-        
+        // CAMBIO: Capturamos 'newlyCreated'
+        const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, req.user.userId);
+
         const updatedAbility = await Ability.findByIdAndUpdate(
             id,
             { $set: enrichedBody },
             { new: true, runValidators: true }
         );
 
+        // AÑADIDO: Lógica de vinculación de vuelta
+        if (newlyCreated && newlyCreated.length > 0) {
+            await Promise.all(newlyCreated.map(item => {
+                const Model = mongoose.model(item.model);
+                // Vincula la nueva entidad con esta habilidad
+                return Model.findByIdAndUpdate(item.id, { $push: { abilities: id } });
+            }));
+        }
+
         res.json(updatedAbility);
     } catch (error) {
-        res.status(400).json({ message: "Error updating ability", error: error.message });
+        console.error("Error updating ability:", error);
+        res.status(500).json({ message: "Error updating ability", error: error.message });
     }
 });
 
@@ -127,7 +138,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         const modelsToClean = [Character, Creature]; // Añade aquí todos los modelos que usen 'abilities'
         const referenceField = 'abilities'; // El nombre del campo a limpiar
 
-        await Promise.all(modelsToClean.map(Model => 
+        await Promise.all(modelsToClean.map(Model =>
             Model.updateMany(
                 { [referenceField]: id },
                 { $pull: { [referenceField]: id } }
@@ -136,7 +147,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 
         // Finalmente, borra la habilidad en sí
         await Ability.findByIdAndDelete(id);
-        
+
         res.json({ message: "Ability deleted successfully and all references have been cleaned." });
     } catch (error) {
         res.status(500).json({ message: "Error deleting ability", error: error.message });

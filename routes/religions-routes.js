@@ -16,8 +16,8 @@ const Faction = require("../models/Faction");
 // --- POPULATE HELPER ---
 const populationPaths = [
     { path: 'characters', select: 'name' }, { path: 'factions', select: 'name' },
-    { path: 'locations', select: 'name' },  { path: 'creatures', select: 'name' },
-    { path: 'events', select: 'name' },     { path: 'powerSystems', select: 'name' },
+    { path: 'locations', select: 'name' }, { path: 'creatures', select: 'name' },
+    { path: 'events', select: 'name' }, { path: 'powerSystems', select: 'name' },
     { path: 'stories', select: 'name' }
 ];
 
@@ -33,7 +33,7 @@ router.get("/", authMiddleware, async (req, res) => {
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .exec();
-        
+
         const count = await Religion.countDocuments({ owner: req.user.userId });
         res.json({
             religions,
@@ -62,12 +62,12 @@ router.post("/", authMiddleware, enforceLimit(Religion), async (req, res) => {
     try {
         const userId = req.user.userId;
         const { name, world } = req.body;
-        
+
         if (!world) return res.status(400).json({ message: "World ID is required." });
 
         const existingReligion = await Religion.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') }, world });
         if (existingReligion) return res.status(409).json({ message: `A religion named "${name}" already exists in this world.` });
-        
+
         const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, userId);
         enrichedBody.owner = userId;
 
@@ -80,7 +80,7 @@ router.post("/", authMiddleware, enforceLimit(Religion), async (req, res) => {
                 return Model.findByIdAndUpdate(item.id, { $push: { religions: newReligion._id } });
             }));
         }
-        
+
         res.status(201).json(newReligion);
     } catch (error) {
         res.status(400).json({ message: "Error creating religion", error: error.message });
@@ -90,16 +90,28 @@ router.post("/", authMiddleware, enforceLimit(Religion), async (req, res) => {
 // PUT /:id : Actualiza una religión
 router.put("/:id", authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id } = req.params; // ID de la religión que se edita
         const religion = await Religion.findOne({ _id: id, owner: req.user.userId });
         if (!religion) return res.status(404).json({ message: "Religion not found or access denied" });
 
-        const { enrichedBody } = await autoPopulateReferences(req.body, req.user.userId);
-        
+        // CAMBIO: Capturamos 'newlyCreated'
+        const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, req.user.userId);
+
         const updatedReligion = await Religion.findByIdAndUpdate(id, { $set: enrichedBody }, { new: true, runValidators: true });
+
+        // AÑADIDO: Lógica de vinculación de vuelta
+        if (newlyCreated && newlyCreated.length > 0) {
+            await Promise.all(newlyCreated.map(item => {
+                const Model = mongoose.model(item.model);
+                // Vincula la nueva entidad con esta religión
+                return Model.findByIdAndUpdate(item.id, { $push: { religions: id } });
+            }));
+        }
+
         res.json(updatedReligion);
     } catch (error) {
-        res.status(400).json({ message: "Error updating religion", error: error.message });
+        console.error("Error updating religion:", error);
+        res.status(500).json({ message: "Error updating religion", error: error.message });
     }
 });
 
@@ -113,7 +125,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         const modelsToClean = [Character, Faction]; // Añade aquí otros modelos que tengan un campo 'religions'
         const referenceField = 'religions';
 
-        await Promise.all(modelsToClean.map(Model => 
+        await Promise.all(modelsToClean.map(Model =>
             Model.updateMany({ [referenceField]: id }, { $pull: { [referenceField]: id } })
         ));
 

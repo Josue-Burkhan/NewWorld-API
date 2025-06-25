@@ -51,7 +51,7 @@ router.get("/", authMiddleware, async (req, res) => {
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .exec();
-        
+
         const count = await Character.countDocuments({ owner: req.user.userId });
         res.json({
             characters,
@@ -84,12 +84,12 @@ router.post("/", authMiddleware, async (req, res) => {
     try {
         const userId = req.user.userId;
         const { name, world } = req.body;
-        
+
         if (!world) return res.status(400).json({ message: "World ID is required." });
 
         const existingCharacter = await Character.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') }, world });
         if (existingCharacter) return res.status(409).json({ message: `A character named "${name}" already exists in this world.` });
-        
+
         const allowed = await canCreateCharacter(userId);
         if (!allowed) return res.status(403).json({ message: "Character creation limit reached." });
 
@@ -105,7 +105,7 @@ router.post("/", authMiddleware, async (req, res) => {
                 return Model.findByIdAndUpdate(item.id, { $push: { characters: newCharacter._id } });
             }));
         }
-        
+
         res.status(201).json(newCharacter);
     } catch (error) {
         res.status(500).json({ message: "Error creating character", error: error.message });
@@ -119,16 +119,26 @@ router.put("/:id", authMiddleware, async (req, res) => {
         const character = await Character.findOne({ _id: id, owner: req.user.userId });
         if (!character) return res.status(404).json({ message: "Character not found or access denied" });
 
-        const { enrichedBody } = await autoPopulateReferences(req.body, req.user.userId);
-        
+        const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, req.user.userId);
+
         const updatedCharacter = await Character.findByIdAndUpdate(
             id,
             { $set: enrichedBody },
             { new: true, runValidators: true }
         );
 
+        if (newlyCreated && newlyCreated.length > 0) {
+            await Promise.all(newlyCreated.map(item => {
+                const Model = mongoose.model(item.model);
+
+                return Model.findByIdAndUpdate(item.id, { $push: { characters: id } });
+            }));
+        }
+
         res.json(updatedCharacter);
+
     } catch (error) {
+        console.error("Error updating character:", error);
         res.status(500).json({ message: "Error updating character", error: error.message });
     }
 });
@@ -141,7 +151,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         if (!characterToDelete) {
             return res.status(404).json({ message: "Character not found or access denied" });
         }
-        
+
         // 1. Define todos los modelos y los campos que podrían referenciar a un personaje
         const modelsAndFieldsToClean = [
             { model: Character, fields: ['relationships.family', 'relationships.friends', 'relationships.enemies', 'relationships.romance'] },
@@ -151,8 +161,8 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 
         // 2. Ejecuta la limpieza en paralelo
         await Promise.all(
-            modelsAndFieldsToClean.flatMap(item => 
-                item.fields.map(field => 
+            modelsAndFieldsToClean.flatMap(item =>
+                item.fields.map(field =>
                     item.model.updateMany(
                         { [field]: id },
                         { $pull: { [field]: id } }
@@ -162,7 +172,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         );
 
         await Character.findByIdAndDelete(id);
-        
+
         res.json({ message: "Character deleted successfully and all references have been cleaned." });
     } catch (error) {
         res.status(500).json({ message: "Error deleting character", error: error.message });

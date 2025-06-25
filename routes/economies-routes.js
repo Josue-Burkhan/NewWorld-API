@@ -34,7 +34,7 @@ router.get("/", authMiddleware, async (req, res) => {
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .exec();
-        
+
         const count = await Economy.countDocuments({ owner: req.user.userId });
         res.json({
             economies,
@@ -63,12 +63,12 @@ router.post("/", authMiddleware, enforceLimit(Economy), async (req, res) => {
     try {
         const userId = req.user.userId;
         const { name, world } = req.body;
-        
+
         if (!world) return res.status(400).json({ message: "World ID is required." });
 
         const existingEconomy = await Economy.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') }, world });
         if (existingEconomy) return res.status(409).json({ message: `An economy named "${name}" already exists in this world.` });
-        
+
         const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, userId);
         enrichedBody.owner = userId;
 
@@ -81,7 +81,7 @@ router.post("/", authMiddleware, enforceLimit(Economy), async (req, res) => {
                 return Model.findByIdAndUpdate(item.id, { $push: { economies: newEconomy._id } });
             }));
         }
-        
+
         res.status(201).json(newEconomy);
     } catch (error) {
         res.status(400).json({ message: "Error creating economy", error: error.message });
@@ -91,16 +91,28 @@ router.post("/", authMiddleware, enforceLimit(Economy), async (req, res) => {
 // PUT /:id : Actualiza una economía
 router.put("/:id", authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id } = req.params; // ID de la economía que se edita
         const economy = await Economy.findOne({ _id: id, owner: req.user.userId });
         if (!economy) return res.status(404).json({ message: "Economy not found or access denied" });
 
-        const { enrichedBody } = await autoPopulateReferences(req.body, req.user.userId);
-        
+        // CAMBIO: Capturamos 'newlyCreated'
+        const { enrichedBody, newlyCreated } = await autoPopulateReferences(req.body, req.user.userId);
+
         const updatedEconomy = await Economy.findByIdAndUpdate(id, { $set: enrichedBody }, { new: true, runValidators: true });
+
+        // AÑADIDO: Lógica de vinculación de vuelta
+        if (newlyCreated && newlyCreated.length > 0) {
+            await Promise.all(newlyCreated.map(item => {
+                const Model = mongoose.model(item.model);
+                // Vincula la nueva entidad con esta economía
+                return Model.findByIdAndUpdate(item.id, { $push: { economies: id } });
+            }));
+        }
+
         res.json(updatedEconomy);
     } catch (error) {
-        res.status(400).json({ message: "Error updating economy", error: error.message });
+        console.error("Error updating economy:", error);
+        res.status(500).json({ message: "Error updating economy", error: error.message });
     }
 });
 
@@ -114,7 +126,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
         const modelsToClean = [Character]; // Añade aquí otros modelos si es necesario
         const referenceField = 'economies';
 
-        await Promise.all(modelsToClean.map(Model => 
+        await Promise.all(modelsToClean.map(Model =>
             Model.updateMany({ [referenceField]: id }, { $pull: { [referenceField]: id } })
         ));
 
