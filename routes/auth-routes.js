@@ -24,7 +24,7 @@ router.get("/google/callback",
       { expiresIn: "3h" }
     );    
 
-    const redirectPath = req.session.redirectTo || "/new-world/dashboard/";
+    const redirectPath = req.session.redirectTo || "/new-world/dashboard";
 
     const redirectUrl = `https://writers.wild-fantasy.com${redirectPath}?token=${token}`;
 
