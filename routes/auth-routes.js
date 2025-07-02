@@ -26,7 +26,7 @@ router.get("/google/callback",
 
     const redirectPath = req.session.redirectTo || "/new-world/dashboard/";
 
-    const redirectUrl = `https://writers.wild-fantasy.com${redirectPath}?token=${token}`;
+    const redirectUrl = `https://gold-spoonbill-789664.hostingersite.com/${redirectPath}?token=${token}`;
 
     res.redirect(redirectUrl);
   }

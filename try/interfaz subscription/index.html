@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suscripción | Wild Fantasy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div id="tsparticles"></div>
+
+    <div id="loader">
+        <div class="loader-canvas">
+            </div>
+    </div>
+
+    <header class="site-header">
+        <div class="logo-container">
+            <img src="images/logo-wild-fantasy-white.png" alt="Logo de Wild Fantasy" class="logo">
+        </div>
+        <div class="header-actions">
+            <button class="header-button">Iniciar Sesión</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <h1 class="title animate-on-scroll">Elige tu Plan</h1>
+            <p class="description animate-on-scroll">Únete a nuestra comunidad para acceder a contenido exclusivo y apoyar nuestro trabajo.</p>
+
+            <div class="plan-toggle animate-on-scroll">
+                <span class="toggle-label active" id="monthly-label">Mensual</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="plan-toggle-checkbox">
+                    <span class="slider"></span>
+                </label>
+                <span class="toggle-label" id="annual-label">Anual</span>
+            </div>
+
+            <div class="tiers">
+                <div class="card animate-on-scroll" id="tier-basico">
+                    <h2>Básico</h2>
+                    <div class="price-container">
+                        <div class="monthly-view">
+                            <span class="price">$5</span><span class="price-period">/mes</span>
+                        </div>
+                        <div class="annual-view">
+                            <span class="price-old">$5/mes</span>
+                            <span class="price">$48</span><span class="price-period">/año</span>
+                            <span class="discount-badge">Ahorra 20%</span>
+                        </div>
+                    </div>
+                    <ul><li>Acceso a capítulos anticipados</li><li>Acceso a la comunidad de Discord</li><li>Contenido extra ocasional</li></ul>
+                    <button class="subscribe-btn">Elegir Básico</button>
+                </div>
+
+                <div class="card animate-on-scroll" id="tier-avanzado">
+                    <h2>Avanzado</h2>
+                    <div class="price-container">
+                         <div class="monthly-view">
+                            <span class="price">$10</span><span class="price-period">/mes</span>
+                        </div>
+                        <div class="annual-view">
+                            <span class="price-old">$10/mes</span>
+                            <span class="price">$96</span><span class="price-period">/año</span>
+                             <span class="discount-badge">Ahorra 20%</span>
+                        </div>
+                    </div>
+                    <ul><li>Todo lo del plan Básico</li><li>Ilustraciones y arte conceptual</li><li>Escenas eliminadas y borradores</li></ul>
+                    <button class="subscribe-btn">Elegir Avanzado</button>
+                </div>
+
+                <div class="card animate-on-scroll" id="tier-epico">
+                    <h2>Épico</h2>
+                    <div class="price-container">
+                         <div class="monthly-view">
+                            <span class="price">$20</span><span class="price-period">/mes</span>
+                        </div>
+                        <div class="annual-view">
+                            <span class="price-old">$20/mes</span>
+                            <span class="price">$192</span><span class="price-period">/año</span>
+                             <span class="discount-badge">Ahorra 20%</span>
+                        </div>
+                    </div>
+                    <ul><li>Todo lo del plan Avanzado</li><li>Participación en votaciones</li><li>Tu nombre en los agradecimientos</li></ul>
+                    <button class="subscribe-btn">Elegir Épico</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

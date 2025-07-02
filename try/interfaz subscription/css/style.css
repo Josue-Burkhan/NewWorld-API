@@ -1,0 +1,107 @@
+:root {
+    --turquoise: #3ec4c9;
+    --dark-bg: #121212;
+    --light-bg: #1d1d1d;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --border-color: #282828;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--dark-bg);
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+/* Fondo de Partículas */
+#tsparticles {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
+
+/* Loader */
+#loader {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: var(--dark-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+}
+.loader-canvas {
+    width: 200px;
+    height: 200px;
+    position: relative;
+}
+.shape {
+    position: absolute;
+    background-color: var(--turquoise);
+    opacity: 0.8;
+}
+.circle { border-radius: 50%; }
+.square { border-radius: 3px; }
+
+/* Header */
+.site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    background-color: rgba(18, 18, 18, 0.8);
+    backdrop-filter: blur(10px);
+    position: sticky; top: 0; z-index: 100;
+}
+.logo { max-width: 120px; }
+.header-button { background-color: transparent; border: 1px solid var(--turquoise); color: var(--turquoise); padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.3s ease; }
+.header-button:hover { background-color: var(--turquoise); color: #000; }
+
+/* Contenido Principal */
+.container { max-width: 1100px; margin: 0 auto; padding: 4rem 2rem; text-align: center; }
+.title { font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; }
+.description { font-size: 1.1rem; max-width: 600px; margin: 0 auto 2.5rem auto; color: var(--text-secondary); }
+
+.animate-on-scroll { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease-out, transform 0.8s ease-out; }
+.animate-on-scroll.is-visible { opacity: 1; transform: translateY(0); }
+
+/* Toggle Mensual/Anual */
+.plan-toggle { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 3rem; }
+.toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--light-bg); transition: .4s; border-radius: 26px; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: var(--turquoise); }
+input:checked + .slider:before { transform: translateX(24px); }
+.toggle-label { font-weight: 500; color: var(--text-secondary); transition: color 0.3s ease; }
+.toggle-label.active { color: var(--text-primary); }
+
+/* Tarjetas de Precios */
+.tiers { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.5rem; }
+.card { background-color: var(--light-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2.5rem 2rem; width: 320px; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.card:hover { transform: translateY(-8px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2); }
+.card h2 { font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--turquoise); }
+.price-container { min-height: 80px; }
+.price { font-size: 2.5rem; font-weight: 700; }
+.price-period { font-size: 1rem; color: var(--text-secondary); }
+.card ul { list-style: none; text-align: left; margin-bottom: 2rem; padding: 0;}
+.card ul li { margin-bottom: 0.75rem; padding-left: 1.5rem; position: relative; }
+.card ul li::before { content: '✔'; color: var(--turquoise); position: absolute; left: 0; }
+.subscribe-btn { background-color: var(--turquoise); color: #000; border: none; padding: 0.9rem 1.5rem; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; font-size: 1rem; transition: all 0.3s ease; }
+.subscribe-btn:hover { background-color: #fff; }
+
+/* Lógica visual del descuento */
+.annual-view { display: none; }
+.price-old { text-decoration: line-through; color: var(--text-secondary); font-size: 1rem; margin-right: 0.5rem; }
+.discount-badge { display: block; font-size: 0.75rem; font-weight: 700; color: #000; background-color: var(--turquoise); padding: 2px 8px; border-radius: 12px; margin: 0.5rem auto 0; max-width: 120px; }
+.card.show-annual .annual-view { display: block; }
+.card.show-annual .monthly-view { display: none; }
