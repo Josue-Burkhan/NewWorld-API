@@ -74,4 +74,46 @@ router.post("/subscribe", authenticateToken, async (req, res) => {
 });
 
 
+// POST /api/paypal/create-subscription  (Tu ruta, ahora corregida)
+router.post("/create-subscription", authenticateToken, async (req, res) => {
+    const { planId } = req.body;
+    if (!planId) {
+        return res.status(400).json({ error: "Falta el ID del plan (planId)." });
+    }
+
+    try {
+        const accessToken = await getPaypalAccessToken();
+
+
+        const returnUrl = "https://writers.wild-fantasy.com/thank-you";
+        const cancelUrl = "https://writers.wild-fantasy.com/suscription";
+
+        const response = await axios.post(`${PAYPAL_API_BASE}/v1/billing/subscriptions`,
+            {
+                plan_id: planId,
+                application_context: {
+                    brand_name: "Wild Fantasy",
+                    user_action: "SUBSCRIBE_NOW",
+                    return_url: returnUrl,
+                    cancel_url: cancelUrl
+                }
+            },
+            {
+                headers: {
+                    "Authorization": `Bearer ${accessToken}`,
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+
+        const approveUrl = response.data.links.find(link => link.rel === "approve").href;
+
+        res.json({ approveUrl });
+
+    } catch (err) {
+        console.error("Error al crear la suscripción en PayPal:", err.response?.data || err.message);
+        res.status(500).json({ error: "Error interno al crear la suscripción." });
+    }
+});
+
 module.exports = router;
