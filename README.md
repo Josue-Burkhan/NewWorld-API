@@ -6,7 +6,7 @@ The software is a RESTful API built with Node.js and the Express framework. It s
 
 My purpose for writing this software was to gain practical, hands-on experience with the entire lifecycle of backend development in a JavaScript environment. This included designing a RESTful architecture, modeling complex and relational data with Mongoose, securing endpoints with authentication middleware, handling asynchronous operations, and structuring a large codebase with a clear separation of concerns (models, views, controllers).
 
-[Software Demo Video](http://youtube.link.goes.here)
+[Software Demo Video](https://youtu.be/Qds-u43hmI4)
 
 # Development Environment
 
